@@ -23,5 +23,4 @@ $text = $rt->readDocument(FILENAME);
 ```
 
 # NOTE:
-To load images, please create a tmp folder where images can be extracted and saved from the document.
-Don't forget to change the permissions in that folder so that the user that runs this class can write the images in it.
+Images will be saved in the 'images' folder. This folder will be automatically created if it does not already exist.
