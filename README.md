@@ -40,23 +40,23 @@ $rt = new WordPHP(false, null, 'dir_name');
 
 ## Read docx file and return the html code - Default mode
 ```
-$text = $rt->readDocument(FILENAME);
+$text = $rt->readDocument('FILENAME');
 ```
 
 ## Read docx file and return the html code - Option 1
 Images can be formatted using external CSS
 ```
-$text = $rt->readDocument(FILENAME,YN);
+$text = $rt->readDocument('FILENAME','YN');
 ```
 
 ## Read docx file and return the html code - Option 2
 Tables will be formatted to 100% of screen width
 ```
-$text = $rt->readDocument(FILENAME,NY);
+$text = $rt->readDocument('FILENAME','NY');
 ```
 
 ## Read docx file and return the html code - Option 1 and 2
 Images can be formatted using external CSS and Tables will be formatted to 100% of screen width
 ```
-$text = $rt->readDocument(FILENAME,YY);
+$text = $rt->readDocument('FILENAME','YY');
 ```
