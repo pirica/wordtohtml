@@ -60,6 +60,3 @@ Images can be formatted using external CSS and Tables will be formatted to 100% 
 ```
 $text = $rt->readDocument(FILENAME,YY);
 ```
-
-# NOTE:
-Images will be saved in an 'images' folder. This folder will be automatically created if it does not already exist.
