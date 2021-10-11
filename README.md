@@ -26,8 +26,8 @@ $rt = new WordPHP(true);
 $rt = new WordPHP(false); or $rt = new WordPHP();
 ```
 
-## Set output encoding
-Will set the encoding of the resultant HTML - eg. 'UTF-8', 'windows-1252', etc.
+## Set output encoding (Default ISO-8859-1)
+Will alter the encoding of the resultant HTML - eg. 'UTF-8', 'windows-1252', etc.
 ```
 $rt = new WordPHP(false, 'desired encoding');
 ```
