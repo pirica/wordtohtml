@@ -6,7 +6,7 @@ This improved DOCS to HTML class will recognise nearly all the formatting, theme
 
 <ul>
 <li>It will use the correct font and font size (assuming that it is not a very obsure font being used).</li>
-<li>Test formating - Bold, Underlining, Italic, Strikethrough, Superscript and Subscript are all replicated, along with text alignment : Left, Centre, Right, Justified.</li>
+<li>Test formating - Bold, Underlining, Italic, Strikethrough, Superscript and Subscript are all replicated, along with text alignment : Left, Centre, Right, Justified. Also indented and hanging text.</li>
 <li>It will display multi-level lists with the correct alpha-numeric numbering as per original.</li>
 <li>It will display tables with merged cells correctly along with border and cell colours etc.</li>
 <li>In the default mode, images are formatted and sized very similarly to the original word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting instead (to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image if desired.</li>
