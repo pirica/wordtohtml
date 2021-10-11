@@ -27,9 +27,9 @@ $rt = new WordPHP(false); or $rt = new WordPHP();
 ```
 
 ## Set output encoding
-Will display the resultant HTML code
+Will set the encoding of the resultant HTML - eg. 'UTF-8', 'windows-1252', etc.
 ```
-$rt = new WordPHP(false, OUTPUT_ENCODING);
+$rt = new WordPHP(false, 'desired encoding');
 ```
 
 ## Read docx file and returns the html code as $text - Default mode
