@@ -2,7 +2,7 @@
 
 ## DESCRIPTION
 
-This improved DOCS to HTML class will recognise nearly all the formatting, themes etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
+This improved DOCS to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
 
 <ul>
 <li>It will use the correct font and font size (assuming that it is not a very obsure font being used).</li>
