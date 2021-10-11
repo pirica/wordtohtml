@@ -16,7 +16,7 @@ This improved DOCS to HTML class will recognise nearly all the formatting, theme
 # USAGE
 
 ## debug mode 
-Will display the various XML files which make up a DOCX file.
+Will display the various XML files which make up a DOCX file and also display the resultant HTML.
 ```
 $rt = new WordPHP(true);
 ```
