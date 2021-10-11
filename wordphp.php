@@ -1635,7 +1635,6 @@ class WordPHP
 		$text .= "</div>";
 		$reader->close();
 		if($this->debug) {
-			echo "<div style='width:100%;'>";
 			echo "Encoding - ".$this->encoding."<br>";
 			echo mb_convert_encoding($text, $this->encoding);
 			echo "</div>";
