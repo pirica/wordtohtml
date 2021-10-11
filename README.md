@@ -32,6 +32,12 @@ Will alter the encoding of the resultant HTML - eg. 'UTF-8', 'windows-1252', etc
 $rt = new WordPHP(false, 'desired encoding');
 ```
 
+## Change directory for images (Default is 'images')
+Will change the directory used for any images in the document.
+```
+$rt = new WordPHP(false, null, 'dir_name');
+```
+
 ## Read docx file and return the html code - Default mode
 ```
 $text = $rt->readDocument(FILENAME);
