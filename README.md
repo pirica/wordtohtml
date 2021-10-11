@@ -32,24 +32,24 @@ Will set the encoding of the resultant HTML - eg. 'UTF-8', 'windows-1252', etc.
 $rt = new WordPHP(false, 'desired encoding');
 ```
 
-## Read docx file and returns the html code as $text - Default mode
+## Read docx file and return the html code - Default mode
 ```
 $text = $rt->readDocument(FILENAME);
 ```
 
-## Read docx file and returns the html code - Option 1
+## Read docx file and return the html code - Option 1
 Images can be formatted using external CSS
 ```
 $text = $rt->readDocument(FILENAME,YN);
 ```
 
-## Read docx file and returns the html code - Option 2
+## Read docx file and return the html code - Option 2
 Tables will be formatted to 100% of screen width
 ```
 $text = $rt->readDocument(FILENAME,NY);
 ```
 
-## Read docx file and returns the html code - Option 1 and 2
+## Read docx file and return the html code - Option 1 and 2
 Images can be formatted using external CSS and Tables will be formatted to 100% of screen width
 ```
 $text = $rt->readDocument(FILENAME,YY);
