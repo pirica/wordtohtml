@@ -2,7 +2,10 @@
 
 ## DESCRIPTION
 
-This improved DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.<br>
+This improved DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
+
+UPDATE - Now been updated to run on php 7.3.
+
 NOTE:- It will not read the older 'DOC' Word format. In this case it will give an error message saying that it is not a 'non zip file'.
 
 <ul>
