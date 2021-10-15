@@ -42,7 +42,7 @@ $rt = new WordPHP(false, null, 'dir_name');
 
 ## Read docx file and return the html code - Default mode
 ```
-$text = $rt->readDocument('FILENAME');
+$text = $rt->readDocument('FILENAME','NN');
 ```
 
 ## Read docx file and return the html code - Option 1
