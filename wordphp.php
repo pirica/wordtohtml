@@ -201,6 +201,8 @@ class WordPHP
 		$Rfont = $this->findfonts();
 		$reader1 = new XMLReader();
 		$reader1->XML($this->styles_xml->saveXML());
+		$FontTheme = '';
+		$Rstyle = array();
 		while ($reader1->read()) {
 		// look for required style
 			$znum = 1;
