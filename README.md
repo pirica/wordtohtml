@@ -74,6 +74,8 @@ $text = $rt->readDocument('FILENAME','YY');
 
 ## UPDATE NOTES
 
+Version 2.1.4 - Clearance of a minor bug
+
 Version 2.1.3 - Clearance of a few bugs: 1. The endnote references in the text were not in roman numerals as they should be. - 2. In certain circumstances the correct font and font size were not being used. - 3. In certain circumstances a bookmark link did not work.
 
 Version 2.1.2 - Will now recognise higher resolution images (Word deals with these differently to lower resolution images)
