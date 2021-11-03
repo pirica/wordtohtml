@@ -527,7 +527,6 @@ class WordPHP
 			if($reader->name == "w:br") { // Checks for page break
 				if ($reader->getAttribute("w:type") == 'page'){
 					$ret['Pbreak'] = 'Y';
-				echo "Page break found<br>";
 				}
 			}
 			if($reader->name == "w:b") {
