@@ -4,11 +4,7 @@
 
 This improved DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
 
-New in version 2.1.2 - Will now recognise higher resolution images (Word deals with these differently to lower resolution images)
-
-New in version 2.1.1 - Will now recognise paragraph numbering as well as list numbering.
-
-New in version 2.1.0 - Improved method of displaying lists. Can now display footnotes and endnotes and their text references. The bookmarks in a 'Table of Contents' or similar, now link to the appropriate section of the document.
+For update notes see below.
 
 NOTE - will run on (at least) php 7.3.
 
@@ -75,3 +71,13 @@ Images can be formatted using external CSS and Tables will be formatted to 100% 
 ```
 $text = $rt->readDocument('FILENAME','YY');
 ```
+
+## UPDATE NOTES
+
+Version 2.1.3 - Clearance of a few bugs: 1. The endnote references in the text were not in roman numerals as they should be. - 2. In certain circumstances the correct font and font size were not being used. - 3. In certain circumstances a bookmark link did not work.
+
+Version 2.1.2 - Will now recognise higher resolution images (Word deals with these differently to lower resolution images)
+
+Version 2.1.1 - Will now recognise paragraph numbering as well as list numbering.
+
+Version 2.1.0 - Improved method of displaying lists. Can now display footnotes and endnotes and their text references. The bookmarks in a 'Table of Contents' or similar, now link to the appropriate section of the document.
