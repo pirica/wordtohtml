@@ -4,7 +4,7 @@
 
 This improved DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
 
-For update notes see below.
+For update notes detailing changes up to the latest version of 2.1.5 see below.
 
 NOTE - will run on (at least) php 7.3.
 
@@ -26,8 +26,13 @@ FEATURES
 
 # USAGE
 
+## Include the class in your php script
+```
+require_once('wordphp.php');
+```
+
 ## debug mode 
-Will display the various zipped XML files which make up a DOCX file and also display the resultant HTML.
+Will display the various zipped XML files in the DOCX file which are used by the class for the document being converted and will also display the resultant HTML.
 ```
 $rt = new WordPHP(true);
 ```
@@ -74,11 +79,13 @@ $text = $rt->readDocument('FILENAME','YY');
 
 ## UPDATE NOTES
 
-Version 2.1.4 - Clearance of a minor bug
+Version 2.1.5 - Various enhancements. 1. Will now operate much faster. Previously, was often several seconds, now will give the output in a fraction of a second. - 2. Will now recognise Drop Capitals. - 3. Will now recognise a Cross-Reference link in the document. - 4. Text formatting now implemented in the Footnotes and endnotes. - 5. Rectified a bug where sometimes hyperlinks were not recognised properly in footnotes and endnotes.
+
+Version 2.1.4 - Clearance of a minor bug.
 
 Version 2.1.3 - Clearance of a few bugs: 1. The endnote references in the text were not in roman numerals as they should be. - 2. In certain circumstances the correct font and font size were not being used. - 3. In certain circumstances a bookmark link did not work.
 
-Version 2.1.2 - Will now recognise higher resolution images (Word deals with these differently to lower resolution images)
+Version 2.1.2 - Will now recognise higher resolution images (Word deals with these differently to lower resolution images).
 
 Version 2.1.1 - Will now recognise paragraph numbering as well as list numbering.
 
