@@ -793,274 +793,279 @@ class WordPHP
 	{
 		
 		$node = trim($xml->readOuterXML());
-
-		$reader = new XMLReader();
-		$reader->XML($node);
-		$PSret= array();
-		$LnumA = array();
-		$ListnumId = '';
-		$DC = '';
-		static $Listcount = array();
-		static $numb_xml = null;
+		if ($node <>''){
+			$reader = new XMLReader();
+			$reader->XML($node);
+			$PSret= array();
+			$LnumA = array();
+			$ListnumId = '';
+			$DC = '';
+			static $Listcount = array();
+			static $numb_xml = null;
 		
-		while ($reader->read()){
-			if($reader->name == "w:framePr") { // get font style for list numbering
-				$PSret['Dcap'] = $reader->getAttribute("w:dropCap");
-			}
-			if($reader->name == "w:pStyle" && $reader->hasAttributes ) {
-				$Pstyle = $reader->getAttribute("w:val");
-				$PSret['style'] = $Pstyle; //return the element's style
-				if (substr($Pstyle,0,7) == 'numpara'){
-					$ListnumId = $this->Rstyle[$Pstyle]['parnum'];
-					$Listlevel = 0;
+			while ($reader->read()){
+				if($reader->name == "w:framePr") { // get font style for list numbering
+					$PSret['Dcap'] = $reader->getAttribute("w:dropCap");
 				}
-			}
-			if($reader->name == "w:ilvl" && $reader->hasAttributes) { // List formating - list level
-				$Listlevel = $reader->getAttribute("w:val");
-			}
-			if($reader->name == "w:numId" && $reader->hasAttributes) { // List formating - List cross reference
-				$ListnumId = $reader->getAttribute("w:val");
-			}
-
-			if($reader->name == "w:spacing") { // Checks for paragraph spacing
-				if ($reader->getAttribute("w:before") <>''){
-					$bmar =  "margin-top: ".round($reader->getAttribute("w:before")/$this->MTFactor)."px;";
-				}
-				if ($reader->getAttribute("w:after") <>''){
-					$amar =  "margin-bottom: ".round($reader->getAttribute("w:after")/$this->MTFactor)."px;";
-				}
-
-			}
-			if($reader->name == "w:ind") { // Checks for paragraph indent
-				if ($reader->getAttribute("w:left") <>''){
-					$aind =  "padding-left: ".round($reader->getAttribute("w:left")/$this->MTFactor)."px;";
-				}
-				if ($reader->getAttribute("w:right") <>''){
-					$bind =  "padding-right: ".round($reader->getAttribute("w:right")/$this->MTFactor)."px;";
-				}
-				if ($reader->getAttribute("w:hanging") <>''){
-					$Thang = round($reader->getAttribute("w:hanging")/$this->MTFactor);
-						if ($PSret['Dcap'] == 'margin'){
-							$Thang = $Thang + 10;
-						}
-						$cind =  "text-indent: -".$Thang."px;";
-				}
-				if ($reader->getAttribute("w:firstLine") <>''){
-					$dind =  "text-indent: ".round($reader->getAttribute("w:firstLine")/$this->MTFactor)."px;";
-				}
-			}
-			if($reader->name == "w:jc") { // Checks for paragraph alignment
-				switch($reader->getAttribute("w:val")) {
-					case "left":
-						$palign =  "text-align: left;";
-						break;
-					case "center":
-						$palign =  "text-align: center;";
-						break;
-					case "right":
-						$palign =  "text-align: right;";
-						break;
-					case "both":
-						$palign =  "text-align: justify;";
-						break;
-				}
-			} else if ($this->Rstyle[$Pstyle]['Align']){
-				$palign =  $this->Rstyle[$Pstyle]['Align'];
-			}
-			if($reader->name == "w:pBdr") { // Add horizontal line
-				$hr = "width:100%; height:1px; background: #000000";
-			}
-		}
-		
-		if ($ListnumId){
-			if (!$numb_xml){
-				$zip = new ZipArchive();
-				$_xml_numb = 'word/numbering.xml';
-		
-				if (true === $zip->open($this->file)) {
-					//Get the list references from the word numbering file
-					if (($index = $zip->locateName($_xml_numb)) !== false) {
-						$xml_numb = $zip->getFromIndex($index);
-					}
-					$zip->close();
-				}
-
-				$enc = mb_detect_encoding($xml_numb);
-				$this->setXmlParts($numb_xml, $xml_numb, $enc);
-		
-				if($this->debug) {
-					echo "<br>XML File : word/numbering.xml<br>";
-					echo "<textarea style='width:100%; height: 200px;'>";
-					echo $numb_xml->saveXML();
-					echo "</textarea>";
-				}
-			}
-			
-			
-			
-			// look for the List reference number of this element
-			$reader1 = new XMLReader();
-			$reader1->XML($numb_xml->saveXML());
-			while ($reader1->read()) {
-				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:num' && $reader1->getAttribute("w:numId") == $ListnumId) {
-					$st1 = new XMLReader;
-					$st1->xml(trim($reader1->readOuterXML()));
-					while ($st1->read()) {
-						if($st1->name == 'w:abstractNumId') {
-							$ListAbsNo = $st1->getAttribute("w:val");
-						}
+				if($reader->name == "w:pStyle" && $reader->hasAttributes ) {
+					$Pstyle = $reader->getAttribute("w:val");
+					$PSret['style'] = $Pstyle; //return the element's style
+					if (substr($Pstyle,0,7) == 'numpara'){
+						$ListnumId = $this->Rstyle[$Pstyle]['parnum'];
+						$Listlevel = 0;
 					}
 				}
-			}
-			// look for the List details of this element
-			$reader2 = new XMLReader();
-			$reader2->XML($numb_xml->saveXML());
-			while ($reader2->read()) {
-				if ($reader2->nodeType == XMLREADER::ELEMENT && $reader2->name == 'w:abstractNum' && $reader2->getAttribute("w:abstractNumId") == $ListAbsNo) {
-					$st2 = new XMLReader;
-					$st2->xml(trim($reader2->readOuterXML()));
-					while ($st2->read()) {
-						if($st2->nodeType == XMLREADER::ELEMENT && $st2->name == 'w:lvl') {
-							$Rlvl = $st2->getAttribute("w:ilvl");
-						}
-						if($st2->name == 'w:start') {
-						$Rstart[$Rlvl] = $st2->getAttribute("w:val");
-						}
-						if($st2->name == 'w:numFmt') {
-							$Rnumfmt[$Rlvl] = $st2->getAttribute("w:val");
-						}
-						if($st2->name == 'w:lvlText') {
-							$Rlvltxt[$Rlvl] = $st2->getAttribute("w:val");
-						}
-						if($st2->name == "w:ind") { // Gets the list hanging and indent
-							if ($st2->getAttribute("w:left") <>''){
-								$Rind[$Rlvl] =  "padding-left: ".round($st2->getAttribute("w:left")/$this->MTFactor)."px;";
+				if($reader->name == "w:ilvl" && $reader->hasAttributes) { // List formating - list level
+					$Listlevel = $reader->getAttribute("w:val");
+				}
+				if($reader->name == "w:numId" && $reader->hasAttributes) { // List formating - List cross reference
+					$ListnumId = $reader->getAttribute("w:val");
+				}
+
+				if($reader->name == "w:spacing") { // Checks for paragraph spacing
+					if ($reader->getAttribute("w:before") <>''){
+						$bmar =  "margin-top: ".round($reader->getAttribute("w:before")/$this->MTFactor)."px;";
+					}
+					if ($reader->getAttribute("w:after") <>''){
+						$amar =  "margin-bottom: ".round($reader->getAttribute("w:after")/$this->MTFactor)."px;";
+					}
+
+				}
+				if($reader->name == "w:ind") { // Checks for paragraph indent
+					if ($reader->getAttribute("w:left") <>''){
+						$aind =  "padding-left: ".round($reader->getAttribute("w:left")/$this->MTFactor)."px;";
+					}
+					if ($reader->getAttribute("w:right") <>''){
+						$bind =  "padding-right: ".round($reader->getAttribute("w:right")/$this->MTFactor)."px;";
+					}
+					if ($reader->getAttribute("w:hanging") <>''){
+						$Thang = round($reader->getAttribute("w:hanging")/$this->MTFactor);
+							if ($PSret['Dcap'] == 'margin'){
+								$Thang = $Thang + 10;
 							}
-							if ($st2->getAttribute("w:hanging") <>''){
-								$Rhang[$Rlvl] =  "text-indent: -".round($st2->getAttribute("w:hanging")/$this->MTFactor)."px;";
+							$cind =  "text-indent: -".$Thang."px;";
+					}
+					if ($reader->getAttribute("w:firstLine") <>''){
+						$dind =  "text-indent: ".round($reader->getAttribute("w:firstLine")/$this->MTFactor)."px;";
+					}
+				}
+				if($reader->name == "w:jc") { // Checks for paragraph alignment
+					switch($reader->getAttribute("w:val")) {
+						case "left":
+							$palign =  "text-align: left;";
+							break;
+						case "center":
+							$palign =  "text-align: center;";
+							break;
+						case "right":
+							$palign =  "text-align: right;";
+							break;
+						case "both":
+							$palign =  "text-align: justify;";
+							break;
+					}
+				} else if ($this->Rstyle[$Pstyle]['Align']){
+					$palign =  $this->Rstyle[$Pstyle]['Align'];
+				}
+				if($reader->name == "w:pBdr") { // Add horizontal line
+					$hr = "width:100%; height:1px; background: #000000";
+				}
+			}
+		
+			if ($ListnumId){
+				if (!$numb_xml){
+					$zip = new ZipArchive();
+					$_xml_numb = 'word/numbering.xml';
+		
+					if (true === $zip->open($this->file)) {
+						//Get the list references from the word numbering file
+						if (($index = $zip->locateName($_xml_numb)) !== false) {
+							$xml_numb = $zip->getFromIndex($index);
+						}
+						$zip->close();
+					}
+
+					$enc = mb_detect_encoding($xml_numb);
+					$this->setXmlParts($numb_xml, $xml_numb, $enc);
+		
+					if($this->debug) {
+						echo "<br>XML File : word/numbering.xml<br>";
+						echo "<textarea style='width:100%; height: 200px;'>";
+						echo $numb_xml->saveXML();
+						echo "</textarea>";
+					}
+				}
+			
+			
+			
+				// look for the List reference number of this element
+				$reader1 = new XMLReader();
+				$reader1->XML($numb_xml->saveXML());
+				while ($reader1->read()) {
+					if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:num' && $reader1->getAttribute("w:numId") == $ListnumId) {
+						$st1 = new XMLReader;
+						$st1->xml(trim($reader1->readOuterXML()));
+						while ($st1->read()) {
+							if($st1->name == 'w:abstractNumId') {
+								$ListAbsNo = $st1->getAttribute("w:val");
 							}
 						}
 					}
 				}
+				// look for the List details of this element
+				$reader2 = new XMLReader();
+				$reader2->XML($numb_xml->saveXML());
+				while ($reader2->read()) {
+					if ($reader2->nodeType == XMLREADER::ELEMENT && $reader2->name == 'w:abstractNum' && $reader2->getAttribute("w:abstractNumId") == $ListAbsNo) {
+						$st2 = new XMLReader;
+						$st2->xml(trim($reader2->readOuterXML()));
+						while ($st2->read()) {
+							if($st2->nodeType == XMLREADER::ELEMENT && $st2->name == 'w:lvl') {
+								$Rlvl = $st2->getAttribute("w:ilvl");
+							}
+							if($st2->name == 'w:start') {
+							$Rstart[$Rlvl] = $st2->getAttribute("w:val");
+							}
+							if($st2->name == 'w:numFmt') {
+								$Rnumfmt[$Rlvl] = $st2->getAttribute("w:val");
+							}
+							if($st2->name == 'w:lvlText') {
+								$Rlvltxt[$Rlvl] = $st2->getAttribute("w:val");
+							}
+							if($st2->name == "w:ind") { // Gets the list hanging and indent
+								if ($st2->getAttribute("w:left") <>''){
+									$Rind[$Rlvl] =  "padding-left: ".round($st2->getAttribute("w:left")/$this->MTFactor)."px;";
+								}
+								if ($st2->getAttribute("w:hanging") <>''){
+									$Rhang[$Rlvl] =  "text-indent: -".round($st2->getAttribute("w:hanging")/$this->MTFactor)."px;";
+								}
+							}
+						}
+					}
+				}
 			}
-		}
 		
-		if ($bmar == ''){ //set margin-top
-			if ($this->Rstyle[$Pstyle]['MPtop']){
-				$bmar =  $this->Rstyle[$Pstyle]['MPtop'];
-			} else if ($this->Rstyle[$Tstyle]['MPtop']){
-				$bmar =  $this->Rstyle[$Tstyle]['MPtop'];
-			} else if ($this->Rstyle['TableNormal']['MPtop']){ 
-				$bmar =  ";".$this->Rstyle['TableNormal']['MPtop'];
-			} else if ($this->Rstyle['Default']['Mtop']){
-				$bmar =  $this->Rstyle['Default']['Mtop'];
-			} else {
-				$bmar =  " margin-top:0px;";
-			}	
-		}
-		if ($amar == ''){ // set margin-bottom
- 			if ($this->Rstyle[$Pstyle]['MPbot']){
-				$amar =  $this->Rstyle[$Pstyle]['MPbot'];
-			} else if ($this->Rstyle[$Tstyle]['MPbot']){
-				$amar =  $this->Rstyle[$Tstyle]['MPbot'];
-			} else if ($this->Rstyle['TableNormal']['MPbot']){
-				$amar =  $this->Rstyle['TableNormal']['MPbot'];
-			} else if ($this->Rstyle['Default']['Mbot']){
-				$amar =  $this->Rstyle['Default']['Mbot'];
-			} else {
-				$amar =  " margin-bottom:0px;";
+			if ($bmar == ''){ //set margin-top
+				if ($this->Rstyle[$Pstyle]['MPtop']){
+					$bmar =  $this->Rstyle[$Pstyle]['MPtop'];
+				} else if ($this->Rstyle[$Tstyle]['MPtop']){
+					$bmar =  $this->Rstyle[$Tstyle]['MPtop'];
+				} else if ($this->Rstyle['TableNormal']['MPtop']){ 
+					$bmar =  ";".$this->Rstyle['TableNormal']['MPtop'];
+				} else if ($this->Rstyle['Default']['Mtop']){
+					$bmar =  $this->Rstyle['Default']['Mtop'];
+				} else {
+					$bmar =  " margin-top:0px;";
+				}	
 			}
-		}
-		if ($PSret['Dcap'] == 'margin'){
-			$cmar =  " margin-left:0px";
-		} else if ($this->Rstyle[$Tstyle]['Mleft']){ // set margin-left
-			$cmar =  " margin-left".$this->Rstyle[$Tstyle]['Mleft'];
-		} else if ($this->Rstyle['TableNormal']['Mleft']){
-			$cmar =  " margin-left".$this->Rstyle['TableNormal']['Mleft'];
-		}
-		if ($this->Rstyle[$Tstyle]['Mright']){ //set margin-right
-			$dmar =  " margin-right".$this->Rstyle[$Tstyle]['Mright'];
-		} else if ($this->Rstyle['TableNormal']['Mright']){
-			$dmar =  " margin-right".$this->Rstyle['TableNormal']['Mright'];
-		}
-		if ($this->Rstyle[$Pstyle]['Bcolor']){ // set text colour
-			$bcol = " background-color:#".$this->Rstyle[$Pstyle]['Bcolor'].";";
-		}
-		if ($aind == ''){ // set left indent
-			if ($Rind[$Listlevel]){
-				$aind = $Rind[$Listlevel];
-			} else if ($this->Rstyle[$Pstyle]['Ileft']){
-				$aind =  $this->Rstyle[$Pstyle]['Ileft'];
+			if ($amar == ''){ // set margin-bottom
+				if ($this->Rstyle[$Pstyle]['MPbot']){
+					$amar =  $this->Rstyle[$Pstyle]['MPbot'];
+				} else if ($this->Rstyle[$Tstyle]['MPbot']){
+					$amar =  $this->Rstyle[$Tstyle]['MPbot'];
+				} else if ($this->Rstyle['TableNormal']['MPbot']){
+					$amar =  $this->Rstyle['TableNormal']['MPbot'];
+				} else if ($this->Rstyle['Default']['Mbot']){
+					$amar =  $this->Rstyle['Default']['Mbot'];
+				} else {
+					$amar =  " margin-bottom:0px;";
+				}
 			}
-		}
-		if ($bind == ''){ // set right indent
-			if ($this->Rstyle[$Pstyle]['Iright']){
-				$bind =  $this->Rstyle[$Pstyle]['Iright'];
+			if ($PSret['Dcap'] == 'margin'){
+				$cmar =  " margin-left:0px";
+			} else if ($this->Rstyle[$Tstyle]['Mleft']){ // set margin-left
+				$cmar =  " margin-left".$this->Rstyle[$Tstyle]['Mleft'];
+			} else if ($this->Rstyle['TableNormal']['Mleft']){
+				$cmar =  " margin-left".$this->Rstyle['TableNormal']['Mleft'];
 			}
-		}
-		if ($cind == ''){ // set first line hanging indent
-			if ($Rhang[$Listlevel]){
-				$cind = $Rhang[$Listlevel];
-			} else if ($this->Rstyle[$Pstyle]['Ihang']){
-				$cind =  $this->Rstyle[$Pstyle]['Ihang'];
+			if ($this->Rstyle[$Tstyle]['Mright']){ //set margin-right
+				$dmar =  " margin-right".$this->Rstyle[$Tstyle]['Mright'];
+			} else if ($this->Rstyle['TableNormal']['Mright']){
+				$dmar =  " margin-right".$this->Rstyle['TableNormal']['Mright'];
 			}
-		}
-		if ($dind == ''){ // set first line indent
-			if ($this->Rstyle[$Pstyle]['Ifirst']){
-				$dind =  $this->Rstyle[$Pstyle]['Ifirst'];
+			if ($this->Rstyle[$Pstyle]['Bcolor']){ // set text colour
+				$bcol = " background-color:#".$this->Rstyle[$Pstyle]['Bcolor'].";";
 			}
-		}
-		// return the paragraph styling
-		$PSret['Pform'] = " style='".$bmar.$amar.$cmar.$dmar.$aind.$bind.$cind.$dind.$palign.$bcol.$hr."'";
+			if ($aind == ''){ // set left indent
+				if ($Rind[$Listlevel]){
+					$aind = $Rind[$Listlevel];
+				} else if ($this->Rstyle[$Pstyle]['Ileft']){
+					$aind =  $this->Rstyle[$Pstyle]['Ileft'];
+				}
+			}
+			if ($bind == ''){ // set right indent
+				if ($this->Rstyle[$Pstyle]['Iright']){
+					$bind =  $this->Rstyle[$Pstyle]['Iright'];
+				}
+			}
+			if ($cind == ''){ // set first line hanging indent
+				if ($Rhang[$Listlevel]){
+					$cind = $Rhang[$Listlevel];
+				} else if ($this->Rstyle[$Pstyle]['Ihang']){
+					$cind =  $this->Rstyle[$Pstyle]['Ihang'];
+				}
+			}
+			if ($dind == ''){ // set first line indent
+				if ($this->Rstyle[$Pstyle]['Ifirst']){
+					$dind =  $this->Rstyle[$Pstyle]['Ifirst'];
+				}
+			}
+			// return the paragraph styling
+			$PSret['Pform'] = " style='".$bmar.$amar.$cmar.$dmar.$aind.$bind.$cind.$dind.$palign.$bcol.$hr."'";
 		
-		$alphabet = array( 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y'. 'z');
+			$alphabet = array( 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y'. 'z');
 		
   
-		if ($ListnumId){ // If the element is a list element get its number
-			if (substr($Rlvltxt[$Listlevel],0,1) <> '%'){ // Check if there is a character before the list number and if so get it
-				$LNfirst = substr($Rlvltxt[$Listlevel],0,1);
-			} else {
-				$LNfirst = '';
-			}
-			$LNlast = substr($Rlvltxt[$Listlevel],-1); // The last character of a list number
-			if ($Listcount[$ListnumId][$Listlevel] == ''){ // Get the list number of the list element
-				$Listcount[$ListnumId][$Listlevel] = $Rstart[$Listlevel];
-				$Listcount[$ListnumId][$Listlevel + 1] = '';
-			} else {
-				$Listcount[$ListnumId][$Listlevel] = $Listcount[$ListnumId][$Listlevel] + 1;
-				$Listcount[$ListnumId][$Listlevel + 1] = '';
-			}
-			if (strlen($Rlvltxt[$Listlevel]) > 4){
-				$Lcount = 0;
-			} else {
-				$Lcount = $Listlevel;
-			}
-			while ($Lcount <= $Listlevel){ // produce the list element number
-				$LnumA[$Lcount] = $Listcount[$ListnumId][$Lcount]; // The number of the list element
-				if ($Rnumfmt[$Lcount] == 'lowerLetter'){
-					$LnumA[$Lcount] = $LNfirst.$alphabet[$LnumA[$Lcount]-1].$LNlast;
-				} else if ($Rnumfmt[$Lcount] == 'upperLetter'){
-					$LnumA[$Lcount] = $LNfirst.strtoupper($alphabet[$LnumA[$Lcount]-1].$LNlast);
-				} else if ($Rnumfmt[$Lcount] == 'lowerRoman'){
-					$LnumA[$Lcount] = $LNfirst.$this->numberToRoman($LnumA[$Lcount]).$LNlast;
-				} else if ($Rnumfmt[$Lcount] == 'upperRoman'){
-					$LnumA[$Lcount] = $LNfirst.strtoupper($this->numberToRoman($LnumA[$Lcount])).$LNlast;
-				} else if ($Rnumfmt[$Lcount] == 'bullet'){
-					$LnumA[$Lcount] = "•";
+			if ($ListnumId){ // If the element is a list element get its number
+				if (substr($Rlvltxt[$Listlevel],0,1) <> '%'){ // Check if there is a character before the list number and if so get it
+					$LNfirst = substr($Rlvltxt[$Listlevel],0,1);
 				} else {
-					$LnumA[$Lcount] = $LNfirst.$LnumA[$Lcount].$LNlast;
+					$LNfirst = '';
 				}
-				$Lnum .= $LnumA[$Lcount];
-				$Lcount++;
+				$LNlast = substr($Rlvltxt[$Listlevel],-1); // The last character of a list number
+				if ($Listcount[$ListnumId][$Listlevel] == ''){ // Get the list number of the list element
+					$Listcount[$ListnumId][$Listlevel] = $Rstart[$Listlevel];
+					$Listcount[$ListnumId][$Listlevel + 1] = '';
+				} else {
+					$Listcount[$ListnumId][$Listlevel] = $Listcount[$ListnumId][$Listlevel] + 1;
+					$Listcount[$ListnumId][$Listlevel + 1] = '';
+				}
+				if (strlen($Rlvltxt[$Listlevel]) > 4){
+					$Lcount = 0;
+				} else {
+					$Lcount = $Listlevel;
+				}
+				while ($Lcount <= $Listlevel){ // produce the list element number
+					$LnumA[$Lcount] = $Listcount[$ListnumId][$Lcount]; // The number of the list element
+					if ($Rnumfmt[$Lcount] == 'lowerLetter'){
+						$LnumA[$Lcount] = $LNfirst.$alphabet[$LnumA[$Lcount]-1].$LNlast;
+					} else if ($Rnumfmt[$Lcount] == 'upperLetter'){
+						$LnumA[$Lcount] = $LNfirst.strtoupper($alphabet[$LnumA[$Lcount]-1].$LNlast);
+					} else if ($Rnumfmt[$Lcount] == 'lowerRoman'){
+						$LnumA[$Lcount] = $LNfirst.$this->numberToRoman($LnumA[$Lcount]).$LNlast;
+					} else if ($Rnumfmt[$Lcount] == 'upperRoman'){
+						$LnumA[$Lcount] = $LNfirst.strtoupper($this->numberToRoman($LnumA[$Lcount])).$LNlast;
+					} else if ($Rnumfmt[$Lcount] == 'bullet'){
+						$LnumA[$Lcount] = "•";
+					} else {
+						$LnumA[$Lcount] = $LNfirst.$LnumA[$Lcount].$LNlast;
+					}
+					$Lnum .= $LnumA[$Lcount];
+					$Lcount++;
+				}
+				$Lnum = $Lnum."&nbsp;&nbsp;&nbsp;";
+		
 			}
-			$Lnum = $Lnum."&nbsp;&nbsp;&nbsp;";
 		
+			$PSret['Lnum'] = $Lnum;  // return the element's list number
+			$PSret['listnum'] = $ListnumId;
+			return $PSret;
 		}
-		
-		$PSret['Lnum'] = $Lnum;  // return the element's list number
-		$PSret['listnum'] = $ListnumId;
-		return $PSret;
-
+		$PSret['Dcap'] = '';
+		$PSret['Style'] = '';
+		$PSret['Pform'] = '';
+		$PSret['Lnum'] = '';
+		$PSret['listnum'] = '';
 	}
 	
 	/**
@@ -1091,8 +1096,8 @@ class WordPHP
 				}
 				$d++;
 			}					
-			$ImgW = substr($Wtmp,0,-2) * 1.4;
-			$ImgH = substr($Htmp,0,-2) * 1.4;
+			$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
+			$ImgH = (float)substr($Htmp,0,-2) * 1.4;
 			
 			$relId;
 			$notfound = true;
@@ -1117,8 +1122,8 @@ class WordPHP
 						}
 						$c++;
 					}					
-					$ImgW = substr($Wtmp,0,-2) * 1.4;
-					$ImgH = substr($Htmp,0,-2) * 1.4;
+					$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
+					$ImgH = (float)substr($Htmp,0,-2) * 1.4;
 					$ImgL = substr($Ltmp,0,-2);
 				}
 				if ($reader->name == "v:imagedata") { // Get image name
