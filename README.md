@@ -6,7 +6,7 @@ This improved DOCX to HTML class will recognise nearly all the formatting, theme
 
 For update notes detailing changes up to the latest version of 2.1.6 see below.
 
-NOTE - will run on (at least) php 8.1.
+NOTE - will run on up to (at least) php 8.1.
 
 NOTE:- It will not read the older 'DOC' Word format. In this case it will give an error message saying that it is a 'non zip file'.
 
