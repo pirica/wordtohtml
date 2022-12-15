@@ -4,9 +4,9 @@
 
 This improved DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
 
-For update notes detailing changes up to the latest version of 2.1.5 see below.
+For update notes detailing changes up to the latest version of 2.1.6 see below.
 
-NOTE - will run on (at least) php 7.3.
+NOTE - will run on (at least) php 8.1.
 
 NOTE:- It will not read the older 'DOC' Word format. In this case it will give an error message saying that it is a 'non zip file'.
 
@@ -78,6 +78,8 @@ $text = $rt->readDocument('FILENAME','YY');
 ```
 
 ## UPDATE NOTES
+
+Version 2.1.6 - Will now work on up to (at least) php 8.1
 
 Version 2.1.5 - Various enhancements. 1. Will now operate much faster. Previously, was often several seconds, now will give the output in a fraction of a second. - 2. Will now recognise Drop Capitals. - 3. Will now recognise a Cross-Reference link in the document. - 4. Text formatting now implemented in the Footnotes and endnotes. - 5. Rectified a bug where sometimes hyperlinks were not recognised properly in footnotes and endnotes.
 
