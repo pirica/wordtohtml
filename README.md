@@ -79,6 +79,8 @@ $text = $rt->readDocument('FILENAME','YY');
 
 ## UPDATE NOTES
 
+Version 2.1.7 - Modified to clear a lot of php Warning Messages that appear in some environments
+
 Version 2.1.6 - Will now work on up to (at least) php 8.1
 
 Version 2.1.5 - Various enhancements. 1. Will now operate much faster. Previously, was often several seconds, now will give the output in a fraction of a second. - 2. Will now recognise Drop Capitals. - 3. Will now recognise a Cross-Reference link in the document. - 4. Text formatting now implemented in the Footnotes and endnotes. - 5. Rectified a bug where sometimes hyperlinks were not recognised properly in footnotes and endnotes.
