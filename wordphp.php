@@ -66,8 +66,6 @@ class WordPHP
 		$zip = new ZipArchive();
 		$_xml = 'word/document.xml';
 		$_xml_rels = 'word/_rels/document.xml.rels';
-//		$_xml_fonts = 'word/fontTable.xml';
-//		$_xml_settings = 'word/settings.xml';
 		
 		if (true === $zip->open($this->file)) {
 			//Get the main word document file
@@ -78,21 +76,12 @@ class WordPHP
 			if (($index = $zip->locateName($_xml_rels)) !== false) {
 				$xml_rels = $zip->getFromIndex($index);
 			}
-			//Get the style references from the word fonts file
-/*			if (($index = $zip->locateName($_xml_fonts)) !== false) {
-				$xml_fonts = $zip->getFromIndex($index);
-			}
-			if (($index = $zip->locateName($_xml_settings)) !== false) {
-				$xml_settings = $zip->getFromIndex($index);
-			} */
 			$zip->close();
 		} else die('ERROR - non zip file');
 
 		$enc = mb_detect_encoding($xml);
 		$this->setXmlParts($this->doc_xml, $xml, $enc);
 		$this->setXmlParts($this->rels_xml, $xml_rels, $enc);
-//		$this->setXmlParts($this->fonts_xml, $xml_fonts, $enc);
-//		$this->setXmlParts($this->settings_xml, $xml_settings, $enc);
 		
 		if($this->debug) {
 			echo "XML File : word/document.xml<br>";
@@ -103,14 +92,6 @@ class WordPHP
 			echo "<textarea style='width:100%; height: 200px;'>";
 			echo $this->rels_xml->saveXML();
 			echo "</textarea>";
-/*			echo "<br>XML File : word/fontTable.xml<br>";
-			echo "<textarea style='width:100%; height: 200px;'>";
-			echo $this->fonts_xml->saveXML();
-			echo "</textarea>";
-			echo "<br>XML File : word/settings.xml<br>";
-			echo "<textarea style='width:100%; height: 200px;'>";
-			echo $this->settings_xml->saveXML();
-			echo "</textarea>"; */
 		}
 	}
 
@@ -192,7 +173,8 @@ class WordPHP
 			}
 			$zip->close();
 		}
-		if ($xml_foot){ // if the footnotes.xml file exists parse it
+		$Ftext = array();
+		if (isset($xml_foot)){ // if the footnotes.xml file exists parse it
 			$enc = mb_detect_encoding($_xml_foot);
 			$this->setXmlParts($foot_xml, $xml_foot, $enc);
 			if($this->debug) {
@@ -203,14 +185,15 @@ class WordPHP
 			}
 			$reader1 = new XMLReader();
 			$reader1->XML($foot_xml->saveXML());
-			$Ftext = array();
 			while ($reader1->read()) {
 			// look for required style
 				$znum = 1;
 				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:footnote') { //Get footnote
 					$zst = array();
+					$zst[0] = '';
 					$zstc = 1;
 					$Footnum = $reader1->getAttribute("w:id");
+					$Ftext[$Footnum] = '';
 					$st2 = new XMLReader;
 					$st2->xml(trim($reader1->readOuterXML()));
 					while ($st2->read()) {
@@ -236,7 +219,10 @@ class WordPHP
 						}
 						if ($st2->nodeType == XMLREADER::ELEMENT && $st2->name == 'w:r') {
 			
-							$Pelement = $this->checkFormating($st2,'',''); // Get inline style and associated text				
+							$Pelement = $this->checkFormating($st2,'',''); // Get inline style and associated text
+							if (!isset($Pelement['style'])){
+								$Pelement['style'] = '';
+							}	
 							$zst[$zstc] = $Pelement['style'];
 							if ($zst[$zstc] != $zst[$zstc-1]){
 								if ($zstc > 1){
@@ -273,7 +259,8 @@ class WordPHP
 			}
 			$zip->close();
 		}
-		if ($xml_end){ // if the endnotes.xml file exists parse it
+		$Etext = array();
+		if (isset($xml_end)){ // if the endnotes.xml file exists parse it
 			$enc = mb_detect_encoding($_xml_end);
 			$this->setXmlParts($end_xml, $xml_end, $enc);
 			if($this->debug) {
@@ -285,12 +272,15 @@ class WordPHP
 		
 			$reader1 = new XMLReader();
 			$reader1->XML($end_xml->saveXML());
-			$Etext = array();
 			while ($reader1->read()) {
 			// look for required style
 				$znum = 1;
 				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:endnote') { //Get endnote
+					$zst = array();
+					$zst[0] = '';
+					$zstc = 1;
 					$Endnum = $reader1->getAttribute("w:id");
+					$Etext[$Endnum] = '';
 					$st2 = new XMLReader;
 					$st2->xml(trim($reader1->readOuterXML()));
 					while ($st2->read()) {
@@ -579,7 +569,7 @@ class WordPHP
 		$ret= array();
 		$img = null;
 		$Footref = '';
-		$Ttmp = '';
+		$Ttmp = $script = $tcol = '';
 		static $zimgcount = 1;
 		$Lstyle = array();
 
@@ -619,6 +609,9 @@ class WordPHP
 			}
 			if($reader->name == "w:rFonts") {
 				 $FF = $reader->getAttribute("w:ascii");
+				 if ($FF == ''){
+					 $FF = 'Times New Roman';
+				 }
 				 if (substr($FF,0,9) == 'Helvetica'){
 					 $FF = 'Helvetica';
 				 }
@@ -686,48 +679,48 @@ class WordPHP
 			$zimgcount++;
 		}
 
-		if ($Lstyle['Bold']){
+		if (isset($Lstyle['Bold'])){
 			$f .= $Lstyle['Bold'];
-		} else if($this->Rstyle[$Pstyle]['Bold']){
+		} else if(isset($this->Rstyle[$Pstyle]['Bold'])){
 			$f .= $this->Rstyle[$Pstyle]['Bold'];
-		} else if($this->Rstyle['Normal']['Bold']){
+		} else if(isset($this->Rstyle['Normal']['Bold'])){
 			$f .= $this->Rstyle['Normal']['Bold'];
 		}
-		if ($Lstyle['Under']){
+		if (isset($Lstyle['Under'])){
 			$f .= $Lstyle['Under'];
-		} else if($this->Rstyle[$Pstyle]['Under']){
+		} else if(isset($this->Rstyle[$Pstyle]['Under'])){
 			$f .= $this->Rstyle[$Pstyle]['Under'];
-		} else if($this->Rstyle['Normal']['Under']){
+		} else if(isset($this->Rstyle['Normal']['Under'])){
 			$f .= $this->Rstyle['Normal']['Under'];
 		}
-		if ($Lstyle['Italic']){
+		if (isset($Lstyle['Italic'])){
 			$f .= $Lstyle['Italic'];
-		} else if($this->Rstyle[$Pstyle]['Italic']){
+		} else if(isset($this->Rstyle[$Pstyle]['Italic'])){
 			$f .= $this->Rstyle[$Pstyle]['Italic'];
-		} else if($this->Rstyle['Normal']['Italic']){
+		} else if(isset($this->Rstyle['Normal']['Italic'])){
 			$f .= $this->Rstyle['Normal']['Italic'];
 		}
-		if ($Lstyle['Font']){
+		if (isset($Lstyle['Font'])){
 			$f .= $Lstyle['Font'];
-		} else if ($this->Rstyle[$Pstyle]['Font']){
+		} else if (isset($this->Rstyle[$Pstyle]['Font'])){
 			$f .= $this->Rstyle[$Pstyle]['Font'];
-		} else if ($this->Rstyle['Normal']['Font']){
+		} else if (isset($this->Rstyle['Normal']['Font'])){
 			$f .= $this->Rstyle['Normal']['Font'];
-		} else if ($this->Rstyle[$Pstyle]['ThFont']){
+		} else if (isset($this->Rstyle[$Pstyle]['ThFont'])){
 			$f .= $this->Rstyle[$Pstyle]['ThFont'];
-		} else if ($this->Rstyle['Theme']['minor']){
+		} else if (isset($this->Rstyle['Theme']['minor'])){
 			$f .= $this->Rstyle['Theme']['minor'];
-		} else if ($this->Rstyle['Default']['Font']){
+		} else if (isset($this->Rstyle['Default']['Font'])){
 			$f .= $this->Rstyle['Default']['Font'];
 		}else{
 		}
-		if ($Lstyle['FontS']){
+		if (isset($Lstyle['FontS'])){
 			$Fsize = $Lstyle['FontS'];
-		} else if ($this->Rstyle[$Pstyle]['FontS']){
+		} else if (isset($this->Rstyle[$Pstyle]['FontS'])){
 			$Fsize = $this->Rstyle[$Pstyle]['FontS'];
-		} else if ($this->Rstyle['Normal']['FontS']){
+		} else if (isset($this->Rstyle['Normal']['FontS'])){
 			$Fsize = $this->Rstyle['Normal']['FontS'];
-		} else if ($this->Rstyle['Default']['FontS']){
+		} else if (isset($this->Rstyle['Default']['FontS'])){
 			$Fsize = $this->Rstyle['Default']['FontS'];
 		}
 		if ($script == 'Y'){
@@ -735,24 +728,24 @@ class WordPHP
 		} else {
 			$f .= " font-size: ".$Fsize."rem;";
 		}
-		if ($Lstyle['Bcolor']){
+		if (isset($Lstyle['Bcolor'])){
 			$Bcolor = $Lstyle['Bcolor'];
 			$f .= " background-color: #".$Lstyle['Bcolor'].";";
-		} else if($this->Rstyle[$Pstyle]['Bcolor']){
+		} else if(isset($this->Rstyle[$Pstyle]['Bcolor'])){
 			$Bcolor = $this->Rstyle[$Pstyle]['Bcolor'];
 			$f .= " background-color: #".$this->Rstyle[$Pstyle]['Bcolor'].";";
 		}
-		if ($Lstyle['Color']){
+		if (isset($Lstyle['Color'])){
 			$tcol = $Lstyle['Color'];
-		} else if($this->Rstyle[$Pstyle]['Color']){
+		} else if(isset($this->Rstyle[$Pstyle]['Color'])){
 			$tcol = $this->Rstyle[$Pstyle]['Color'];
-		} else if($this->Rstyle['Normal']['Color']){
+		} else if(isset($this->Rstyle['Normal']['Color'])){
 			$tcol = $this->Rstyle['Normal']['Color'];
-		} else if($this->Rstyle['Default']['Color']){
+		} else if(isset($this->Rstyle['Default']['Color'])){
 			$tcol = $this->Rstyle['Default']['Color'];
 		}
 		if ($tcol == 'auto'){
-			if ($Bcolor){
+			if (isset($Bcolor)){
 				$red = hexdec(substr($Bcolor,0,2));
 				$green = hexdec(substr($Bcolor,0,2));
 				$blue = hexdec(substr($Bcolor,0,2));
@@ -761,10 +754,10 @@ class WordPHP
 			} else {
 				$f .= "color: #000000;";
 			}
-		} else if ($tcol){
+		} else if ($tcol <> ''){
 			$f .= "color: #".$tcol.";";
 		}
-		if ($this->Rstyle[$Pstyle]['Caps']){
+		if (isset($this->Rstyle[$Pstyle]['Caps'])){
 			$f .= $this->Rstyle[$Pstyle]['Caps'];
 		}
 		
@@ -799,7 +792,7 @@ class WordPHP
 			$PSret= array();
 			$LnumA = array();
 			$ListnumId = '';
-			$DC = '';
+			$DC = $Pstyle = $amar = $bmar = $cmar = $dmar = $PSret['Dcap'] = $aind = $bind = $cind = $dind = $Listlevel = $bcol = $hr = $Lnum = $palign = '';
 			static $Listcount = array();
 			static $numb_xml = null;
 		
@@ -864,7 +857,7 @@ class WordPHP
 							$palign =  "text-align: justify;";
 							break;
 					}
-				} else if ($this->Rstyle[$Pstyle]['Align']){
+				} else if (isset($this->Rstyle[$Pstyle]['Align'])){
 					$palign =  $this->Rstyle[$Pstyle]['Align'];
 				}
 				if($reader->name == "w:pBdr") { // Add horizontal line
@@ -946,26 +939,26 @@ class WordPHP
 			}
 		
 			if ($bmar == ''){ //set margin-top
-				if ($this->Rstyle[$Pstyle]['MPtop']){
+				if (isset($this->Rstyle[$Pstyle]['MPtop'])){
 					$bmar =  $this->Rstyle[$Pstyle]['MPtop'];
-				} else if ($this->Rstyle[$Tstyle]['MPtop']){
+				} else if (isset($this->Rstyle[$Tstyle]['MPtop'])){
 					$bmar =  $this->Rstyle[$Tstyle]['MPtop'];
-				} else if ($this->Rstyle['TableNormal']['MPtop']){ 
+				} else if (isset($this->Rstyle['TableNormal']['MPtop'])){ 
 					$bmar =  ";".$this->Rstyle['TableNormal']['MPtop'];
-				} else if ($this->Rstyle['Default']['Mtop']){
+				} else if (isset($this->Rstyle['Default']['Mtop'])){
 					$bmar =  $this->Rstyle['Default']['Mtop'];
 				} else {
 					$bmar =  " margin-top:0px;";
 				}	
 			}
 			if ($amar == ''){ // set margin-bottom
-				if ($this->Rstyle[$Pstyle]['MPbot']){
+				if (isset($this->Rstyle[$Pstyle]['MPbot'])){
 					$amar =  $this->Rstyle[$Pstyle]['MPbot'];
-				} else if ($this->Rstyle[$Tstyle]['MPbot']){
+				} else if (isset($this->Rstyle[$Tstyle]['MPbot'])){
 					$amar =  $this->Rstyle[$Tstyle]['MPbot'];
-				} else if ($this->Rstyle['TableNormal']['MPbot']){
+				} else if (isset($this->Rstyle['TableNormal']['MPbot'])){
 					$amar =  $this->Rstyle['TableNormal']['MPbot'];
-				} else if ($this->Rstyle['Default']['Mbot']){
+				} else if (isset($this->Rstyle['Default']['Mbot'])){
 					$amar =  $this->Rstyle['Default']['Mbot'];
 				} else {
 					$amar =  " margin-bottom:0px;";
@@ -973,40 +966,40 @@ class WordPHP
 			}
 			if ($PSret['Dcap'] == 'margin'){
 				$cmar =  " margin-left:0px";
-			} else if ($this->Rstyle[$Tstyle]['Mleft']){ // set margin-left
+			} else if (isset($this->Rstyle[$Tstyle]['Mleft'])){ // set margin-left
 				$cmar =  " margin-left".$this->Rstyle[$Tstyle]['Mleft'];
-			} else if ($this->Rstyle['TableNormal']['Mleft']){
+			} else if (isset($this->Rstyle['TableNormal']['Mleft'])){
 				$cmar =  " margin-left".$this->Rstyle['TableNormal']['Mleft'];
 			}
-			if ($this->Rstyle[$Tstyle]['Mright']){ //set margin-right
+			if (isset($this->Rstyle[$Tstyle]['Mright'])){ //set margin-right
 				$dmar =  " margin-right".$this->Rstyle[$Tstyle]['Mright'];
-			} else if ($this->Rstyle['TableNormal']['Mright']){
+			} else if (isset($this->Rstyle['TableNormal']['Mright'])){
 				$dmar =  " margin-right".$this->Rstyle['TableNormal']['Mright'];
 			}
-			if ($this->Rstyle[$Pstyle]['Bcolor']){ // set text colour
+			if (isset($this->Rstyle[$Pstyle]['Bcolor'])){ // set text colour
 				$bcol = " background-color:#".$this->Rstyle[$Pstyle]['Bcolor'].";";
 			}
 			if ($aind == ''){ // set left indent
-				if ($Rind[$Listlevel]){
+				if (isset($Rind[$Listlevel])){
 					$aind = $Rind[$Listlevel];
-				} else if ($this->Rstyle[$Pstyle]['Ileft']){
+				} else if (isset($this->Rstyle[$Pstyle]['Ileft'])){
 					$aind =  $this->Rstyle[$Pstyle]['Ileft'];
 				}
 			}
 			if ($bind == ''){ // set right indent
-				if ($this->Rstyle[$Pstyle]['Iright']){
+				if (isset($this->Rstyle[$Pstyle]['Iright'])){
 					$bind =  $this->Rstyle[$Pstyle]['Iright'];
 				}
 			}
 			if ($cind == ''){ // set first line hanging indent
-				if ($Rhang[$Listlevel]){
+				if (isset($Rhang[$Listlevel])){
 					$cind = $Rhang[$Listlevel];
-				} else if ($this->Rstyle[$Pstyle]['Ihang']){
+				} else if (isset($this->Rstyle[$Pstyle]['Ihang'])){
 					$cind =  $this->Rstyle[$Pstyle]['Ihang'];
 				}
 			}
 			if ($dind == ''){ // set first line indent
-				if ($this->Rstyle[$Pstyle]['Ifirst']){
+				if (isset($this->Rstyle[$Pstyle]['Ifirst'])){
 					$dind =  $this->Rstyle[$Pstyle]['Ifirst'];
 				}
 			}
@@ -1023,6 +1016,9 @@ class WordPHP
 					$LNfirst = '';
 				}
 				$LNlast = substr($Rlvltxt[$Listlevel],-1); // The last character of a list number
+				if (!isset($Listcount[$ListnumId][$Listlevel])){
+					$Listcount[$ListnumId][$Listlevel] = '';
+				}
 				if ($Listcount[$ListnumId][$Listlevel] == ''){ // Get the list number of the list element
 					$Listcount[$ListnumId][$Listlevel] = $Rstart[$Listlevel];
 					$Listcount[$ListnumId][$Listlevel + 1] = '';
@@ -1046,7 +1042,20 @@ class WordPHP
 					} else if ($Rnumfmt[$Lcount] == 'upperRoman'){
 						$LnumA[$Lcount] = $LNfirst.strtoupper($this->numberToRoman($LnumA[$Lcount])).$LNlast;
 					} else if ($Rnumfmt[$Lcount] == 'bullet'){
-						$LnumA[$Lcount] = "•";
+						echo mb_ord($Rlvltxt[$Lcount])."--";
+						if (mb_ord($Rlvltxt[$Lcount]) == 61692){
+							$LnumA[$Lcount] = "✓";
+						} else if (mb_ord($Rlvltxt[$Lcount]) == 61623){
+							$LnumA[$Lcount] = "•";
+						} else if (mb_ord($Rlvltxt[$Lcount]) == 61607){
+							$LnumA[$Lcount] = "◾";
+						} else if (mb_ord($Rlvltxt[$Lcount]) == 61656){
+							$LnumA[$Lcount] = "➢";
+						} else if (mb_ord($Rlvltxt[$Lcount]) == 111){
+							$LnumA[$Lcount] = $Rlvltxt[$Lcount];
+						} else {
+							$LnumA[$Lcount] = "◾";
+						}
 					} else {
 						$LnumA[$Lcount] = $LNfirst.$LnumA[$Lcount].$LNlast;
 					}
@@ -1080,7 +1089,7 @@ class WordPHP
 		$content = trim($xml->readInnerXml());
 
 		if (!empty($content)) {
-			$ImgL = '';
+			$ImgL = $Wtmp = $Htmp = $Ltmp = $Imgpos = '';
 			$arr = explode(';', $Psize); // Get image size if $Psize was supplied to this function
 			$l = count($arr);
 			$d = 0;
@@ -1095,9 +1104,11 @@ class WordPHP
 					$Ltmp = substr($arr[$d],12);
 				}
 				$d++;
-			}					
-			$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
-			$ImgH = (float)substr($Htmp,0,-2) * 1.4;
+			}
+			if (isset($Wtmp)){	
+				$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
+				$ImgH = (float)substr($Htmp,0,-2) * 1.4;
+			}
 			
 			$relId;
 			$notfound = true;
@@ -1182,7 +1193,7 @@ class WordPHP
 			$reader = new XMLReader();
 			$reader->XML($content);
 			static $Icount = 1;
-			$Inline = '';
+			$Inline = $offset = $Imgpos = '';
 			
 			while ($reader->read() && $notfound) {
 				if ($reader->name == "wp:inline") { // Checks if image is 'Inline'
@@ -1381,28 +1392,36 @@ class WordPHP
 	 */
 	private function getParagraph(&$paragraph,$Tstyle)
 	{
-		$text = '';
-		$list_format=array();
 		$zst = array();
+		$text = $BookMk = $BookRet = $Pstyle = $zst[0] = '';
+		$list_format=array();
 		$zzz = $text;
 		$zstc = 1;
 		$Pformat = 'N';
 
 		$Dstyle = $this->getListFormating($paragraph,$Tstyle); //default styles for the document
+		if (!isset($Dstyle['Pform'])){
+			$Dstyle['Pform'] = '';
+		}
 		// loop through paragraph dom
 		while ($paragraph->read()) {
 			// look for elements
 			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:r') {
+				if (!isset($list_format['style'])){
+					$list_format['style'] = '';
+				}
+				if (!isset($list_format['Dcap'])){
+					$list_format['Dcap'] = '';
+				}
 				$Pelement = $this->checkFormating($paragraph,$list_format['style'],$list_format['Dcap']); //check if this element is a page break and if so ignore this element
-				if ($Pelement['Pbreak'] == ''){
+				if (!isset($Pelement['Pbreak'])){
 					if ($Pformat == 'Y'){
 						if ($list_format['Pform'] <> ''){
 							$text = "<p".$BookMk.$list_format['Pform'].">"; // brings in paragraph formatting
 						} else {
 							$text .= "<p".$BookMk.$Dstyle['Pform'].">";
 						}
-						if($list_format['listnum']){
-//							$Pelement = $this->checkFormating($paragraph,$list_format['style'],$list_format['Dcap']); // Get inline style for list numbering
+						if(isset($list_format['listnum'])){
 							$text .= $Pelement['style'].$list_format['Lnum']."</style>";
 						}
 						$Pformat = 'D';
@@ -1411,7 +1430,6 @@ class WordPHP
 						$text .= "<p".$BookMk.$Dstyle['Pform'].">";
 						$Pformat = 'D';
 					}
-//					$Pelement = $this->checkFormating($paragraph,$list_format['style'],$list_format['Dcap']); // Get inline style and associated text				
 					$zst[$zstc] = $Pelement['style'];
 					if ($zst[$zstc] != $zst[$zstc-1]){
 						if ($zstc > 1){
@@ -1421,11 +1439,11 @@ class WordPHP
 						}
 						$zstc++;
 					}
-					if ($Pelement['CRtext']){
+					if (isset($Pelement['CRtext'])){
 						$CRlink = $Pelement['CRtext'];
 					}
-					if ($Pelement['text']){
-						if ($CRlink){
+					if (isset($Pelement['text'])){
+						if (isset($CRlink)){
 							$text .= "<a id='R".$CRlink."' href='#".$CRlink."'>".$Pelement['text']."</a>";
 							$CRlink = '';
 						} else {
@@ -1552,6 +1570,7 @@ class WordPHP
 		$TCcount = 0;
 		$Twidth = 0;
 		$Trow = 1;
+		$Tstyle = '';
 		while ($xml->read()) {
 			if ($xml->nodeType == XMLREADER::ELEMENT && $xml->name === 'w:tbl') { //Get number of rows in the table
 				$Tinfo = $this->getrows(trim($xml->readOuterXML()));
@@ -1595,48 +1614,60 @@ class WordPHP
 				}
 			}
 			
-			
+//			$Tstile['top'] = $Tstile['left'] = $Tstile['bottom'] = $Tstile['right'] = $Tstile['insideH'] = $Tstile['insideV'] = '';
 			if ($xml->nodeType == XMLREADER::ELEMENT && $xml->name === 'w:tr') { //find and process a table row
-				if (! $Tstile['top']){
-					if ($this->Rstyle[$Tstyle]['Btop']){
+				if (!isset($Tstile['top'])){
+					if (isset($this->Rstyle[$Tstyle]['Btop'])){
 						$Tstile['top'] = $this->Rstyle[$Tstyle]['Btop'];
-					} else if ($this->Rstyle['TableNormal']['Btop']){
+					} else if (isset($this->Rstyle['TableNormal']['Btop'])){
 						$Tstile['top'] = $this->Rstyle['TableNormal']['Btop'];
+					} else {
+						$Tstile['top'] = '';
 					}
 				}
-				if (! $Tstile['left']){
-					if ($this->Rstyle[$Tstyle]['Bleft']){
+				if (!isset($Tstile['left'])){
+					if (isset($this->Rstyle[$Tstyle]['Bleft'])){
 						$Tstile['left'] = $this->Rstyle[$Tstyle]['Bleft'];
-					} else if ($this->Rstyle['TableNormal']['Bleft']){
+					} else if (isset($this->Rstyle['TableNormal']['Bleft'])){
 						$Tstile['left'] = $this->Rstyle['TableNormal']['Bleft'];
+					} else {
+						$Tstile['left'] = '';
 					}
 				}
-				if (! $Tstile['bottom']){
-					if ($this->Rstyle[$Tstyle]['Bbottom']){
+				if (!isset($Tstile['bottom'])){
+					if (isset($this->Rstyle[$Tstyle]['Bbottom'])){
 						$Tstile['bottom'] = $this->Rstyle[$Tstyle]['Bbottom'];
-					} else if ($this->Rstyle['TableNormal']['Bbottom']){
+					} else if (isset($this->Rstyle['TableNormal']['Bbottom'])){
 						$Tstile['bottom'] = $this->Rstyle['TableNormal']['Bbottom'];
+					} else {
+						$Tstile['bottom'] = '';
 					}
 				}
-				if (! $Tstile['right']){
-					if ($this->Rstyle[$Tstyle]['Bright']){
+				if (!isset($Tstile['right'])){
+					if (isset($this->Rstyle[$Tstyle]['Bright'])){
 						$Tstile['right'] = $this->Rstyle[$Tstyle]['Bright'];
-					} else if ($this->Rstyle['TableNormal']['Bright']){
+					} else if (isset($this->Rstyle['TableNormal']['Bright'])){
 						$Tstile['right'] = $this->Rstyle['TableNormal']['Bright'];
+					} else {
+						$Tstile['right'] = '';
 					}
 				}
-				if (! $Tstile['insideH']){
-					if ($this->Rstyle[$Tstyle]['BinsideH']){
+				if (!isset($Tstile['insideH'])){
+					if (isset($this->Rstyle[$Tstyle]['BinsideH'])){
 						$Tstile['insideH'] = $this->Rstyle[$Tstyle]['BinsideH'];
-					} else if ($this->Rstyle['TableNormal']['BinsideH']){
+					} else if (isset($this->Rstyle['TableNormal']['BinsideH'])){
 						$Tstile['insideH'] = $this->Rstyle['TableNormal']['BinsideH'];
+					} else {
+						$Tstile['insideH'] = '';
 					}
 				}
-				if (! $Tstile['insideV']){
-					if ($this->Rstyle[$Tstyle]['BinsideV']){
+				if (!isset($Tstile['insideV'])){
+					if (isset($this->Rstyle[$Tstyle]['BinsideV'])){
 						$Tstile['insideV'] = $this->Rstyle[$Tstyle]['BinsideV'];
-					} else if ($this->Rstyle['TableNormal']['BinsideV']){
+					} else if (isset($this->Rstyle['TableNormal']['BinsideV'])){
 						$Tstile['insideV'] = $this->Rstyle['TableNormal']['BinsideV'];
+					} else {
+						$Tstile['insideV'] = '';
 					}
 				}
 				$tc = "";
@@ -1655,17 +1686,17 @@ class WordPHP
 					$style = '';
 					if ($tr->nodeType == XMLREADER::ELEMENT && $tr->name === 'w:tcPr') { //get cell border formatting
 						$ts = $this->processTableStyle(trim($tr->readOuterXML()));
-						if ($ts['left']){  // set left border of a table cell
+						if (isset($ts['left'])){  // set left border of a table cell
 							$style .= " border-left".$ts['left'];
 						} else{
 						$style .= ($Tcol == 1) ? " border-left".$Tstile['left'] : " border-left".$Tstile['insideV'];
 						}
-						if ($ts['top']){  // set the top border of a table cell
+						if (isset($ts['top'])){  // set the top border of a table cell
 							$style .= " border-top".$ts['top'];
 						} else{
 							$style .= ($Trow == 1) ? " border-top".$Tstile['top'] : " border-top".$Tstile['insideH'];
 						}
-						if ($ts['bottom']){  // set the bottom border of a table cell
+						if (isset($ts['bottom'])){  // set the bottom border of a table cell
 							$style .= " border-bottom".$ts['bottom'];
 						} else{
 							if ($Tmerge[$Trow][$Tcol] > 1){  // set the bottom border of a table cell is a vertical cell merge
@@ -1674,10 +1705,10 @@ class WordPHP
 								$style .= ($Trow == $Trows) ? " border-bottom".$Tstile['bottom'] : " border-bottom".$Tstile['insideH'];
 							}
 						}
-						if ($ts['colspan'] <> ''){  // if a table cell is a horizontal cell merge, determine number of additional cells that make up the merge
+						if (isset($ts['colspan'])){  // if a table cell is a horizontal cell merge, determine number of additional cells that make up the merge
 							$TCoffset = $TCoffset + $ts['colspan'] - 1;
 						}
-						if ($ts['right']){  // set the right border of the table cell
+						if (isset($ts['right'])){  // set the right border of the table cell
 							$style .= " border-right".$ts['right'];
 						} else{
 							$style .= ($Tcol + $TCoffset == $TCcount) ? " border-right".$Tstile['right'] : " border-right".$Tstile['insideV'];
@@ -1688,13 +1719,13 @@ class WordPHP
 						if ($Tmerge[$Trow][$Tcol] > 0){
 							if ($this->Tcss == 'Y'){
 								if ($Tmerge[$Trow][$Tcol] == 1){
-									if ($ts['colspan'] <> ''){
+									if (isset($ts['colspan'])){
 										$table .= "<td colspan='".$ts['colspan']."'; style='width:".floor($Cwidth[$Tcol] / $Twidth *95)."%; ".$style;
 									} else {
 										$table .= "<td style='width:".floor($Cwidth[$Tcol] / $Twidth *95)."%; ".$style;
 									}
 								} else {
-									if ($ts['colspan'] <> ''){
+									if (isset($ts['colspan'])){
 										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; colspan='".$ts['colspan']."'; style='width:".floor($Cwidth[$Tcol] / $Twidth *95)."%; ".$style;
 									} else {
 										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; style='width:".floor($Cwidth[$Tcol] / $Twidth *95)."%; ".$style;
@@ -1812,7 +1843,7 @@ class WordPHP
 		$tc->xml($content);
 		$ct = array();
 		$count = 0;
-		$valign = '';
+		$valign = $halign = $ct['cell'] = $colours = '';
 		while ($tc->read()) {
 			$ztpp = '';
 			$ztp = '';
@@ -1854,9 +1885,12 @@ class WordPHP
 			}
 			if ($tc->name === "w:shd" AND $tc->getAttribute("w:fill")) {  // cell background color
 				$BackCol = $tc->getAttribute("w:fill");
+				if ($BackCol == 'auto'){
+					$BackCol = 'FFFFFF';
+				}
 				$red = hexdec(substr($BackCol,0,2));
-				$green = hexdec(substr($BackCol,0,2));
-				$blue = hexdec(substr($BackCol,0,2));
+				$green = hexdec(substr($BackCol,2,2));
+				$blue = hexdec(substr($BackCol,4,2));
 				$color = (($red * 0.299) + ($green * 0.587) + ($blue * 0.114) > 186) ?  'FFFFFF' : '000000';
 				$colours = "background-color: #".$BackCol."; color: #".$color.";";
 			}
@@ -1916,22 +1950,22 @@ class WordPHP
 			}
 		}
 		$Foot = $this->footnotes(); // Get any Footnotes in the document
-		if ($Foot[1]) {
+		if (isset($Foot[1])) {
 			$text .= "<br>&nbsp;";
 			$text .= "<hr><p style='margin-top:6px;margin-bottom:6px;'><b>FOOTNOTES</b></p>";
 			$Fcount = 1;
-			while ($Foot[$Fcount]){
+			while (isset($Foot[$Fcount])){
 				$text .= "<p style='padding-left:50px;text-indent:-50px;margin-top:6px;margin-bottom:6px;'><sup><a id='FN".$Fcount."' href='#FN".$Fcount."R'>[".$Fcount."]</a></sup>&nbsp;&nbsp;&nbsp;".$Foot[$Fcount]."</p>";
 				++$Fcount;
 			}
 		}
 		
 		$Endn = $this->endnotes(); //Get any Endnotes in the document
-		if ($Endn[1]) {
+		if (isset($Endn[1])) {
 			$text .= "<br>&nbsp;";
 			$text .= "<hr><p style='margin-top:6px;margin-bottom:6px;'><b>ENDNOTES</b></p>";
 			$Fcount = 1;
-			while ($Endn[$Fcount]){
+			while (isset($Endn[$Fcount])){
 				$text .= "<p style='padding-left:50px;text-indent:-50px; margin-top:6px;margin-bottom:6px;'><sup><a id='EN".$Fcount."' href='#EN".$Fcount."R'>[".$this->numberToRoman($Fcount)."]</a></sup>&nbsp;&nbsp;&nbsp;".$Endn[$Fcount]."</p>";
 				++$Fcount;
 			}
