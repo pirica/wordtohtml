@@ -4,7 +4,7 @@
 
 This improved DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
 
-For update notes detailing changes up to the latest version of 2.1.6 see below.
+For update notes detailing changes up to the latest version of 2.1.8 see below.
 
 NOTE - will run on up to (at least) php 8.1.
 
@@ -42,10 +42,10 @@ $rt = new WordPHP(true);
 $rt = new WordPHP(false); or $rt = new WordPHP();
 ```
 
-## Set output encoding (Default is ISO-8859-1)
-Will alter the encoding of the resultant HTML - eg. 'UTF-8', 'windows-1252', etc.
+## Set output encoding (Default is UTF-8)
+You can alter the encoding of the resultant HTML - eg. 'ISO-8859-1', 'windows-1252', etc. Although note that a few characters may not then display correctly.
 ```
-$rt = new WordPHP(false, 'desired encoding');
+$rt = new WordPHP(false, 'UTF-8');
 ```
 
 ## Change directory for images (Default is 'images')
@@ -78,6 +78,8 @@ $text = $rt->readDocument('FILENAME','YY');
 ```
 
 ## UPDATE NOTES
+
+Version 2.1.8 - Various enhancements and bug fixes. 1. Will now recognise multiple spaces, - 2. Will recognise pdf images. - 3. Will now tell you if the .docx file cannot be found. - 4. Will now recognise checkboxes. - 5. Will now recognise most common list bullets (assuming that UTF-8 is used). - 6. Multiple bugfixes (Table widths and alignments not always correct - Top and bottom margins of text not always displayed correctly - Several other minor fixes).
 
 Version 2.1.7 - Modified to clear a lot of php Warning Messages that appear in some environments
 
