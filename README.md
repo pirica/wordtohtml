@@ -64,7 +64,7 @@ $rt = new WordPHP(false); or $rt = new WordPHP();
 ```
 
 ## Set output encoding (Default is UTF-8)
-You can alter the encoding of the resultant HTML - eg. 'ISO-8859-1', 'windows-1252', etc. Although note that many sopecial chacters and sysmbols may not then display correctly.
+You can alter the encoding of the resultant HTML - eg. 'ISO-8859-1', 'windows-1252', etc. Although note that many special chacters and symbols may not then display correctly so UTF-8 should be used whenever practical.
 ```
 $rt = new WordPHP(false, 'UTF-8');
 ```
