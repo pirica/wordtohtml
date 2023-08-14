@@ -569,9 +569,13 @@ class WordPHP
 		$ret= array();
 		$img = null;
 		$Footref = '';
-		$Ttmp = $script = $tcol = $Sfont = $tch = $tch1 = $Tstr = '';
+		$Ttmp = $script = $tcol = $Sfont = $tch = $tch1 = $Tstr = $relId = '';
 		static $zimgcount = 1;
 		$Lstyle = array();
+		$Icrop = array();
+		$TT = '';
+		$ImgL = $Wtmp = $Htmp = $Ltmp = $Imgpos = '';
+
 		$Wingding1 = array(32 => 32, 128393, 9986, 9985, 128083, 128365, 128366, 128367, 128383, 9990, 128386, 128387, 128234, 128235, 128236, 128237, 128193, 128194, 128196, 128463, 128464, 128452, 8987, 128430, 128432, 128434, 128435, 128436, 128427, 128428, 9991, 9997, 128398, 9996, 128076, 128077, 128078, 9756, 9758, 9757, 9759, 128400, 9786, 128528, 9785, 128163, 9760, 127987, 127985, 9992, 9788, 128167, 10052, 128326, 10014, 128328, 10016, 10017, 9770, 9775, 2384, 9784, 9800, 9801, 9802, 9803, 9804, 9805, 9806, 9807, 9808, 9809, 9810, 9811, 128624, 128629, 9679, 128318, 9632, 9633, 128912, 10065, 10066, 11047, 10731, 9670, 10070, 11045, 8999, 11193, 8984, 127989, 127990, 128630, 128631, 128=>9450, 9312, 9313, 9314, 9315, 9316, 9317, 9318, 9319, 9320, 9321, 9471, 10102, 10103, 10104, 10105, 10106, 10107, 10108, 10109, 10110, 10111, 128610, 128608, 128609, 128611, 128606, 128604, 128605, 128607, 183, 8226, 9642, 9898, 128902, 128904, 9673, 9678, 128319, 9642, 9723, 128962, 10022, 9733, 10038, 10036, 10041, 10037, 11216, 8982, 10209, 8977, 11217, 10026, 10032, 128336, 128337, 128338, 128339, 128340, 128341, 128342, 128343, 128344, 128345, 128346, 128347, 11184, 11185, 11186, 11187, 11188, 11189, 11190, 11191, 128618, 128619, 128597, 128596, 128599, 128598, 128592, 128593, 128594, 128595, 9003, 8998, 11160, 11162, 11161, 11163, 11144, 11146, 11145, 11147, 129128, 129130, 129129, 129131, 129132, 129133, 129135, 129134, 129144, 129146, 129145, 129147, 129148, 129149, 129151, 129150, 8678, 8680, 8679, 8681, 11012, 8691, 11008, 11009, 11011, 11010, 129196, 129197, 128502, 10004, 128503, 128505, 32);
 		$Wingding2 = array(32 => 32, 128394, 128395, 128396, 128397, 9988, 9984, 128382, 128381, 128453, 128454, 128455, 128456, 128457, 128458, 128459, 128460, 128461, 128203, 128465, 128468, 128437, 128438, 128439, 128440, 128429, 128431, 128433, 128402, 128403, 128408, 128409, 128410, 128411, 128072, 128073, 128412, 128413, 128414, 128415, 128416, 128417, 128070, 128071, 128418, 128419, 128401, 128500, 10003, 128501, 9745, 9746, 9746, 11198, 11199, 10680, 10680, 128625, 128628, 128626, 128627, 8253, 128633, 128634, 128635, 128614, 128612, 128613, 128615, 128602, 128600, 128601, 128603, 9450, 9312, 9313, 9314, 9315, 9316, 9317, 9318, 9319, 9320, 9321, 9471, 10102, 10103, 10104, 10105, 10106, 10107, 10108, 10109, 10110, 10111, 128=>9737, 127765, 9789, 9790, 11839, 10013, 128327, 128348, 128349, 128350, 128351, 128352, 128353, 128354, 128355, 128356, 128357, 128358, 128359, 128616, 128617, 8226, 9679, 9899, 11044, 128901, 128902, 128903, 128904, 128906, 10687, 9726, 9632, 9724, 11035, 11036, 128913, 128914, 128915, 128916, 9635, 128917, 128918, 128919, 11049, 11045, 9670, 9671, 128922, 9672, 128923, 128924, 128925, 11050, 11047, 10731, 9674, 128928, 9686, 9687, 11210, 11211, 9724, 11045, 11039, 11202, 11043, 11042, 11203, 11204, 128929, 128930, 128931, 128932, 128933, 128934, 128935, 128936, 128937, 128938, 128939, 128940, 128941, 128942, 128943, 128944, 128945, 128946, 128947, 128948, 128949, 128950, 128951, 128952, 128953, 128954, 128955, 128956, 128957, 128958, 128959, 128960, 128962, 128964, 10022, 128969, 9733, 10038, 128971, 10039, 128975, 128978, 10041, 128963, 128967, 10031, 128973, 128980, 11212, 11213, 8251, 8258);
 		$Wingding3 = array(32 => 32, 11104, 11106, 11105, 11107, 11110, 11111, 11113, 11112, 11120, 11122, 11121, 11123, 11126, 11128, 11131, 11133, 11108, 11109, 11114, 11116, 11115, 11117, 11085, 11168, 11169, 11170, 11171, 11172, 11173, 11174, 11175, 11152, 11153, 11154, 11155, 11136, 11139, 11134, 11135, 11140, 11142, 11141, 11143, 11151, 11149, 11150, 11148, 11118, 11119, 9099, 8996, 8963, 8997, 9141, 9085, 8682, 11192, 129184, 129185, 129186, 129187, 129188, 129189, 129190, 129191, 129192, 129193, 129194, 129195, 8592, 8594, 8593, 8595, 8598, 8599, 8601, 8600, 129112, 129113, 9650, 9660, 9651, 9661, 9668, 9658, 9665, 9655, 9699, 9698, 9700, 9701, 128896, 128898, 128897, 128=>128899, 9650, 9660, 9664, 9654, 11164, 11166, 11165, 11167, 129040, 129042, 129041, 129043, 129044, 129046, 129045, 129047, 129048, 129050, 129049, 129051, 129052, 129054, 129053, 129055, 129024, 129026, 129025, 129027, 129028, 129030, 129029, 129031, 129032, 129034, 129033, 129035, 129056, 129058, 129060, 129062, 129064, 129066, 129068, 129180, 129181, 129182, 129183, 129070, 129072, 129074, 129076, 129078, 129080, 129082, 129081, 129083, 129176, 129178, 129177, 129179, 129084, 129086, 129085, 129087, 129088, 129090, 129089, 129091, 129092, 129094, 129093, 129095, 11176, 11177, 11178, 11179, 11180, 11181, 11182, 11183, 129120, 129122, 129121, 129123, 129124, 129125, 129127, 129126, 129136, 129138, 129137, 129139, 129140, 129141, 129143, 129142, 129152, 129152, 129153, 129155, 129156, 129157, 129159, 129158, 129168, 129170, 129169, 129171, 129172, 129174, 129173, 129175);
@@ -674,24 +678,91 @@ class WordPHP
 					$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
 				}
 			}
-			if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'w:pict') { // Get a higher resolution image
-				$r = $this->checkPictFormating($reader, '');
-				if ($this->Icss == 'Y'){
-					$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
-				} else {
-					$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
-				}
-			} 
-			if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:shape' && $img == null) { // a fall back if the 'w:pict' does not get the higher resolution image
+			if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:shape' ) { // get size of higher resolution image
 				$Psize = $reader->getAttribute("style");
-				$r = $this->checkPictFormating($reader, $Psize);
+				$arr = explode(';', $Psize); // Get image size if $Psize was supplied to this function
+				$l = count($arr);
+				$d = 0;
+				while ($d < $l){
+					if (substr($arr[$d],0,5) == 'width' ) {
+						$Wtmp = substr($arr[$d],6);
+						$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
+					}
+					if (substr($arr[$d],0,6) == 'height' ) {
+						$Htmp = substr($arr[$d],7);
+						$ImgH = (float)substr($Htmp,0,-2) * 1.4;
+					}
+					if (substr($arr[$d],0,11) == 'margin-left' ) {
+						$Ltmp = substr($arr[$d],12);
+						$ImgL = substr($Ltmp,0,-2);
+					}
+					$d++;
+				}
+			}
+			if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:imagedata') { // For high resolution images get image and cropping details if they exist
+				$relId = $reader->getAttribute("r:id");
+				$notfound = false;
+				if ($reader->getAttribute("croptop")){
+					$Ctop = substr($reader->getAttribute("croptop"),0,-1);
+					$TT = 'Y';
+				}
+				if ($reader->getAttribute("cropbottom")){
+					$Cbot = substr($reader->getAttribute("cropbottom"),0,-1);
+					$Cbot = 64000 - $Cbot;
+					$TT = 'Y';
+				}
+				if ($reader->getAttribute("cropleft")){
+					$Cleft = substr($reader->getAttribute("cropleft"),0,-1);
+					$TT = 'Y';
+				}
+				if ($reader->getAttribute("cropright")){
+					$Cright = substr($reader->getAttribute("cropright"),0,-1);
+					$Cright = 64000 - $Cright;
+					$TT = 'Y';
+				}
+				if ($TT == 'Y'){
+					$Cwidth = $Cright - $Cleft;
+					$CwidthPC = $Cwidth / 64000;
+					$CleftPC = $Cleft /64000;
+					$Cheight = $Cbot - $Ctop;
+					$CheightPC = $Cheight / 64000;
+					$CtopPC = $Ctop /64000;
+					$Icrop['left'] = $CleftPC;
+					$Icrop['top'] = $CtopPC;
+					$Icrop['width'] = $CwidthPC;
+					$Icrop['height'] = $CheightPC;
+				}
+				if ($ImgL <> ''){
+				$Imgpos = ($ImgL < 50) ? "float:left;" : "float:right;";
+				}
+				$r['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 15px 10px 15px;'";
+				// image id found, get the image location
+				if (!$notfound && $relId) {
+					$reader = new XMLReader();
+					$reader->XML($this->rels_xml->saveXML());
+					while ($reader->read()) {
+						if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name=='Relationship') {
+							if($reader->getAttribute("Id") == $relId) {
+								$link = "word/".$reader->getAttribute('Target');
+								break;
+							}
+						}
+					}
+				}
+				
+				$zip = new ZipArchive();
+				$im = null;
+				if (true === $zip->open($this->file)) {
+					$r['image'] = $this->createImage($zip->getFromName($link), $relId, $link, $Icrop);
+				}
+				$zip->close();
 				if ($this->Icss == 'Y'){
 					$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
 				} else {
 					$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
 				}
 			}
-			if ($reader->name == "w:t") {
+			if ($reader->name == "w:t") { // Find text and also substitute any symbols found with their Unicode alternatives
 				$Tmptext1 = htmlentities($reader->expand()->textContent);
 				$Tmptext2 = preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
 				if ($Sfont <> '' AND $Tmptext1 <> ''){
@@ -1153,102 +1224,6 @@ class WordPHP
 		$PSret['listnum'] = '';
 	}
 	
-	/**
-	 * CHECKS IF THERE IS A PICTURE PRESENT (used for higher resolution images)
-	 * 
-	 * @param XML $xml - The XML node
-	 * @param $Psize - The image size sent in some modes
-	 * @return String The location of the image
-	 */
-	private function checkPictFormating(&$xml, $Psize)
-	{
-		$content = trim($xml->readInnerXml());
-
-		if (!empty($content)) {
-			$ImgL = $Wtmp = $Htmp = $Ltmp = $Imgpos = '';
-			$arr = explode(';', $Psize); // Get image size if $Psize was supplied to this function
-			$l = count($arr);
-			$d = 0;
-			while ($d < $l){
-				if (substr($arr[$d],0,5) == 'width' ) {
-					$Wtmp = substr($arr[$d],6);
-				}
-				if (substr($arr[$d],0,6) == 'height' ) {
-					$Htmp = substr($arr[$d],7);
-				}
-				if (substr($arr[$d],0,11) == 'margin-left' ) {
-					$Ltmp = substr($arr[$d],12);
-				}
-				$d++;
-			}
-			if (isset($Wtmp)){	
-				$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
-				$ImgH = (float)substr($Htmp,0,-2) * 1.4;
-			}
-			
-			$relId;
-			$notfound = true;
-			$reader = new XMLReader();
-			$reader->XML($content);
-			static $Icount = 1;
-			while ($reader->read()) {
-				if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == "v:shape") { // Get image size if $Psize was not supplied to this function
-					$Psize = $reader->getAttribute("style");
-					$brr = explode(';', $Psize);
-					$l = count($brr);
-					$c = 0;
-					while ($c < $l){
-						if (substr($brr[$c],0,5) == 'width' ) {
-							$Wtmp = substr($brr[$c],6);
-						}
-						if (substr($brr[$c],0,6) == 'height' ) {
-							$Htmp = substr($brr[$c],7);
-						}
-						if (substr($brr[$c],0,11) == 'margin-left' ) {
-							$Ltmp = substr($brr[$c],12);
-						}
-						$c++;
-					}					
-					$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
-					$ImgH = (float)substr($Htmp,0,-2) * 1.4;
-					$ImgL = substr($Ltmp,0,-2);
-				}
-				if ($reader->name == "v:imagedata") { // Get image name
-					$relId = $reader->getAttribute("r:id");
-					$notfound = false;
-				}
-			}
-			if ($ImgL <> ''){
-				$Imgpos = ($ImgL < 50) ? "float:left;" : "float:right;";
-			}
-			$image['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 15px 10px 15px;'";
-			// image id found, get the image location
-			if (!$notfound && $relId) {
-				$reader = new XMLReader();
-				$reader->XML($this->rels_xml->saveXML());
-				while ($reader->read()) {
-					if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name=='Relationship') {
-						if($reader->getAttribute("Id") == $relId) {
-							$link = "word/".$reader->getAttribute('Target');
-							break;
-						}
-					}
-				}
-
-    			$zip = new ZipArchive();
-    			$im = null;
-    			if (true === $zip->open($this->file)) {
-        			$image['image'] = $this->createImage($zip->getFromName($link), $relId, $link);
-    			}
-    			$zip->close();
-    			return $image;
-			}
-		}
-
-	}
-
-
-
 
 
 
@@ -1256,7 +1231,7 @@ class WordPHP
 	 * CHECKS IF THERE IS AN IMAGE PRESENT (Used for lower resolution images)
 	 * 
 	 * @param XML $xml - The XML node
-	 * @return String The location of the image
+	 * @return array The details of the image
 	 */
 	private function checkImageFormating(&$xml)
 	{
@@ -1269,8 +1244,10 @@ class WordPHP
 			$reader = new XMLReader();
 			$reader->XML($content);
 			static $Icount = 1;
-			$Inline = $offset = $Imgpos = '';
-			$Pcount = 0;
+			$Inline = $offset = $Imgpos = $Crop = $TT = '';
+			$Pcount = $Cleft = $CleftPC = $Ctop = $CtopPC = 0;
+			$Cright = $Cbot = 100000;
+			$Icrop = array();
 			
 			while ($reader->read()) {
 				if ($reader->name == "wp:inline") { // Checks if image is 'Inline'
@@ -1293,11 +1270,42 @@ class WordPHP
 						$notfound = false;
 					}
 				}
+				if ($reader->name == "a:srcRect") { // Check if image is cropped and get its positions
+					if ($reader->getAttribute("l")){
+						$Cleft = $reader->getAttribute("l");
+						$TT = 'Y';
+					}
+					if ($reader->getAttribute("t")){
+						$Ctop = $reader->getAttribute("t");
+						$TT = 'Y';
+					}
+					if ($reader->getAttribute("r")){
+						$Cright = $reader->getAttribute("r");
+						$Cright = 100000 - $Cright;
+						$TT = 'Y';
+					}
+					if ($reader->getAttribute("b")){
+						$Cbot = 100000 - $reader->getAttribute("b");
+						$TT = 'Y';
+					}
+					if ($TT == 'Y'){
+						$Cwidth = $Cright - $Cleft;
+						$CwidthPC = $Cwidth / 100000;
+						$CleftPC = $Cleft /100000;
+						$Cheight = $Cbot - $Ctop;
+						$CheightPC = $Cheight / 100000;
+						$CtopPC = $Ctop /100000;
+						$Icrop['left'] = $CleftPC;
+						$Icrop['top'] = $CtopPC;
+						$Icrop['width'] = $CwidthPC;
+						$Icrop['height'] = $CheightPC;
+					}
+				}
 			}
 			if ($Inline == ''){
 				$Imgpos = ($offset < 10000) ? "float:left;" : "float:right;";
 			}
-			$image['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 15px 10px 15px;'";
+			$image['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 5px 10px 5px;'";
 
 			// image id found, get the image location
 			if (!$notfound && $relId) {
@@ -1315,7 +1323,7 @@ class WordPHP
     			$zip = new ZipArchive();
     			$im = null;
     			if (true === $zip->open($this->file)) {
-        			$image['image'] = $this->createImage($zip->getFromName($link), $relId, $link);
+        			$image['image'] = $this->createImage($zip->getFromName($link), $relId, $link, $Icrop);
     			}
     			$zip->close();
     			return $image;
@@ -1331,10 +1339,12 @@ class WordPHP
 	 * @param objetc $image - The image object
 	 * @param string $relId - The image relationship Id
 	 * @param string $name - The image name
+	 * @param array $crop - Details of a cropped image
 	 * @return Array - With image tag definition
 	 */
-	private function createImage($image, $relId, $name)
+	private function createImage($image, $relId, $name, $crop)
 	{
+		static $Ccount = 1;
 		$arr = explode('.', $name);
 		$l = count($arr);
 		$ext = strtolower($arr[$l-1]);
@@ -1344,7 +1354,19 @@ class WordPHP
 		}
 
 		$im = imagecreatefromstring($image);
-		$fname = $this->tmpDir.'/'.$relId.'.'.$ext;
+		if (isset($crop['left'])){
+			$Iwidth = imagesx($im);
+			$Iheight = imagesy($im);
+			$Cx = round($crop['left'] * $Iwidth, 0);
+			$Cy = round($crop['top'] * $Iheight, 0);
+			$Cw = round($crop['width'] * $Iwidth, 0);
+			$Ch = round($crop['height'] * $Iheight, 0);
+			$im = imagecrop($im, ['x' => $Cx, 'y' => $Cy, 'width' => $Cw, 'height' => $Ch]);
+			$fname = $this->tmpDir.'/'.$relId.$Ccount.'.'.$ext;
+			$Ccount++;
+		} else {		
+			$fname = $this->tmpDir.'/'.$relId.'.'.$ext;
+		}
 
 		switch ($ext) {
 			case 'png':
