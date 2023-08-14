@@ -4,28 +4,48 @@
 
 This improved DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
 
-For update notes detailing changes up to the latest version of 2.1.9 see below.
+For update notes detailing changes up to the latest version of 2.1.10 see below.
 
-NOTE - will run on up to (at least) php 8.1.
+NOTE - Needs at least php 5 and will run on up to (at least) php 8.1.
 
 NOTE:- It will not read the older 'DOC' Word format. In this case it will give an error message saying that it is a 'non zip file'.
 
 FEATURES
+
  1. It will use the correct font and font size (assuming that a common font is being used).
+
  2. Text formating - Bold, Underlining, Italic, Strikethrough, Superscript and Subscript are all replicated, along with text alignment : Left, Centre, Right, Justified. Also indented and hanging text.
+
  3. It will display multi-level lists with the correct alpha-numeric numbering as per the original word document.
+
  4. It will now recognise paragraphs numbered with the Word paragraph numbering function as well as the list numbering function.
+
  5. It will display tables with merged cells correctly along with border and cell colours etc.
+
  6. Both footnote and endnote references are located in the correct place in the text. All the actual footnotes and endnotes are located at the end of the text. Links are provided to jump from a reference to actual note and then back again.
+
  7. The bookmarks in a 'Table of Contents' or similar provide a link to the correct section of the document as per the original Word document. A return link is also provided.
+
  8. As many Word documents are quite long a link is provided to jump back to the top of the document. Located at the middle of the right side of the screen.
+
  9. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired.
+ 
  10. In the default mode, tables are replicated as near as possible to the original DOCX word document formatting and size. However an option is provided for the tables to take up 100% of screen width (to allow for better display in mobile devices etc.).
+
  11. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
- 12. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not available commonly on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above.
+ 
+ 12. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above.
+
+ 13. Will now recognise when images are cropped and will now display the cropped image
 
 
 # USAGE
+
+## Increase php memory limit - 
+Only needed when there are high resolution images in the Word document and PHP fatal errors due to using up all the available memory are produced
+```
+ini_set('memory_limit', '512M'); OR ini_set('memory_limit', '1G');
+```
 
 ## Include the class in your php script
 ```
@@ -79,6 +99,8 @@ $text = $rt->readDocument('FILENAME','YY');
 ```
 
 ## UPDATE NOTES
+
+Version 2.1.10 - It will now recognise when images are cropped and display the correct cropped image. Previously is displayed the full original image.
 
 Version 2.1.9 - Enhancement - It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats) when using php 7.2 and above. These character sets are in the main are not commonly available on the web/browsers. However most of the characters or equivalents are available in Unicode so these are used instead. Bug fixes:- 1. If the first few characters in a paragraph were bold and/or underlined, then the whole paragraph was. 2. If a blank line contained a single space, then the blank line was ignored.
 
