@@ -36,10 +36,9 @@ FEATURES
 
  12. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
 
- 13. 
+ 13. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above. Note however that not all browsers can display the full Unicode character set.
 
- 14. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above. Note however that not all browsers can display the full Unicode character set.
-
+ 14. Will now recognise nearly all Mathematical Equations, both standalone and inline with text.
 
 
 # USAGE
@@ -75,18 +74,24 @@ $rt = new WordPHP(false, 'UTF-8');
 ## Change directory for images (Default is 'images')
 Will change the directory used for any images in the document.
 ```
-$rt = new WordPHP(false, null, 'dir_name');
+$rt = new WordPHP(false, 'UTF-8', 'dir_name');
 ```
 
 ## Read docx file and return the html code - Default mode
 ```
-$text = $rt->readDocument('FILENAME','NN');
+$text = $rt->readDocument('FILENAME','N');
 ```
 
-## Read docx file and return the html code - Option 1
+## Read docx file and return the html code - Option 1a
 Images can be formatted using external CSS
 ```
-$text = $rt->readDocument('FILENAME','YN');
+$text = $rt->readDocument('FILENAME','Y');
+```
+
+## Read docx file and return the html code - Option 1b
+Images will be omitted
+```
+$text = $rt->readDocument('FILENAME','Y');
 ```
 
 ## Read docx file and return the html code - Option 2
@@ -95,10 +100,11 @@ Tables will be formatted to 100% of screen width
 $text = $rt->readDocument('FILENAME','NY');
 ```
 
-## Read docx file and return the html code - Option 1 and 2
-Images can be formatted using external CSS and Tables will be formatted to 100% of screen width
+## Read docx file and return the html code - Option 3
+Resultant HTML code with have a standard HTML header added so that it can be run directly in a browser.
+N.B if you wish to use this option in conjunction with option 1a then the CSS file should be named - word-htm.css
 ```
-$text = $rt->readDocument('FILENAME','YY');
+$text = $rt->readDocument('FILENAME','NNY');
 ```
 
 ## UPDATE NOTES
