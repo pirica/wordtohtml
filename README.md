@@ -2,9 +2,9 @@
 
 ## DESCRIPTION
 
-This improved DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
+This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. It now also will display any Mathematical Equations in it. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
 
-For update notes detailing changes up to the latest version of 2.1.10 see below.
+For update notes detailing changes up to the latest version of 2.1.11 see below.
 
 NOTE - Needs at least php 5 and will run on up to (at least) php 8.1.
 
@@ -22,21 +22,24 @@ FEATURES
 
  5. It will display tables with merged cells correctly along with border and cell colours etc.
 
- 6. Both footnote and endnote references are located in the correct place in the text. All the actual footnotes and endnotes are located at the end of the text. Links are provided to jump from a reference to actual note and then back again.
+ 6. In the default mode, tables are replicated as near as possible to the original DOCX word document formatting and size. However an option is provided for the tables to take up 100% of screen width (to allow for better display in mobile devices etc.).
 
- 7. The bookmarks in a 'Table of Contents' or similar provide a link to the correct section of the document as per the original Word document. A return link is also provided.
+ 7. Both footnote and endnote references are located in the correct place in the text. All the actual footnotes and endnotes are located at the end of the text. Links are provided to jump from a reference to actual note and then back again.
 
- 8. As many Word documents are quite long a link is provided to jump back to the top of the document. Located at the middle of the right side of the screen.
+ 8. The bookmarks in a 'Table of Contents' or similar provide a link to the correct section of the document as per the original Word document. A return link is also provided.
 
- 9. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired.
- 
- 10. In the default mode, tables are replicated as near as possible to the original DOCX word document formatting and size. However an option is provided for the tables to take up 100% of screen width (to allow for better display in mobile devices etc.).
+ 9. As many Word documents are quite long a link is provided to jump back to the top of the document. Located at the middle of the right side of the screen.
 
- 11. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
- 
- 12. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above.
+ 10. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired. There is also an option to omit images from the resultant HTML
 
- 13. Will now recognise when images are cropped and will now display the cropped image
+ 11. Will now recognise when images are cropped and display the correct cropped image.
+
+ 12. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
+
+ 13. 
+
+ 14. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above. Note however that not all browsers can display the full Unicode character set.
+
 
 
 # USAGE
