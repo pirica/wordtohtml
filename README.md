@@ -45,14 +45,12 @@ FEATURES
 If anyone finds any problems or has sugestions for enhancements, please contact me on timothy.edwards1@btinternet.com 
 
 # BASIC USAGE
-
+```
 require_once('wordphp.php');
-
 $rt = new WordPHP(false);
-
 $text = $rt->readDocument('FILENAME','N');
-
 echo $text;
+```
 
 # DETAILED USAGE
 
