@@ -40,6 +40,8 @@ FEATURES
 
  14. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax. Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also The Double Square Bracket is not, so any occurences of this are replaced by the Double Pipe.
 
+If anyone has finds any problems or has sugestions for enhancements, please contact me on timothy.edwards1@btinternet.com 
+
 # BASIC USAGE
 
 require_once('wordphp.php');
@@ -110,7 +112,7 @@ $text = $rt->readDocument('FILENAME','NY');
 ```
 
 ## Read docx file and return the html code - Option 3
-Resultant HTML code with have a standard HTML header added so that it can be run directly in a browser.
+Resultant HTML code will have a standard HTML header added so that when saved the saved file can be run directly in a browser.
 N.B if you wish to use this option in conjunction with option 1a then the CSS file should be named - word-htm.css
 ```
 $text = $rt->readDocument('FILENAME','NNY');
