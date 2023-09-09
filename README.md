@@ -71,13 +71,13 @@ Will display the various zipped XML files in the DOCX file which are used by the
 $rt = new WordPHP(true);
 ```
 
-## without debug
+## without debug (Normal Use)
 ```
 $rt = new WordPHP(false); or $rt = new WordPHP();
 ```
 
 ## Set output encoding (Default is UTF-8)
-You can alter the encoding of the resultant HTML - eg. 'ISO-8859-1', 'windows-1252', etc. Although note that many special chacters and symbols may not then display correctly so 'UTF-8' should be used whenever practical.
+You can alter the encoding of the resultant HTML - eg. 'ISO-8859-1', 'windows-1252', etc. Although note that many special chacters and symbols may not then display correctly so the default should be used whenever practical.
 ```
 $rt = new WordPHP(false, 'ISO-8859-1');
 ```
@@ -112,7 +112,7 @@ $text = $rt->readDocument('FILENAME','NY');
 ```
 
 ## Read docx file and return the html code - Option 3
-Resultant HTML code will have a standard HTML header added so that when saved the saved file can be run directly in a browser.
+Resultant HTML code will have a standard HTML header added so that when saved, the saved file can be run directly in a browser.
 N.B if you wish to use this option in conjunction with option 1a then the CSS file should be named - word-htm.css
 ```
 $text = $rt->readDocument('FILENAME','NNY');
