@@ -36,15 +36,22 @@ FEATURES
 
  12. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
 
- 13. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above. Note however that not all browsers can display the full Unicode character set.
+ 13. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above. Please note that not all browsers can display the full Unicode character set.
 
- 14. Will now recognise nearly all Mathematical Equations, both standalone and inline with text.
+ 14. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax. Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also The Double Square Bracket is not, so any occurences of this are replaced by the Double Pipe.
 
+# BASIC USAGE
 
-# USAGE
+require_once('wordphp.php');
+
+$rt = new WordPHP(false, 'UTF-8');
+
+$text = $rt->readDocument('FILENAME','N');
+
+# DETAILED USAGE
 
 ## Increase php memory limit - 
-Only needed when there are high resolution images in the Word document and PHP fatal errors due to using up all the available memory are produced
+Optional - Only needed when there are high resolution images in the Word document and PHP fatal errors due to using up all the available memory are produced
 ```
 ini_set('memory_limit', '512M'); OR ini_set('memory_limit', '1G');
 ```
@@ -108,6 +115,8 @@ $text = $rt->readDocument('FILENAME','NNY');
 ```
 
 ## UPDATE NOTES
+
+Version 2.1.11 - Enhancements and bug fixes - It will now recognise and display Mathematical Equations (using Mathjax). Also clears a bug in listing/paragraph numbering and a bug with merged cells in tables.
 
 Version 2.1.10 - It will now recognise when images are cropped and display the correct cropped image. Previously is displayed the full original image.
 
