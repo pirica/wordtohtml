@@ -1,5 +1,15 @@
+<script>
+MathJax = {
+  loader: {load: ['[tex]/mathtools']},
+  tex: {packages: {'[+]': ['mathtools']}},
+};
+</script>
+
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
 <?php
-class WordPHP
+class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 {
 	private $debug = false;
 	private $file;
@@ -7,11 +17,13 @@ class WordPHP
 	private $doc_xml;
 	private $Icss;
 	private $Tcss;
+	private $Hcss;
 	private $last = 'none';
 	private $encoding = 'UTF-8';
 	private $tmpDir = 'images';
 	private $FSFactor = 22; //Font size conversion factor
 	private $MTFactor = 13; //Margin and table width conversion factor
+	private $Maths;
 	
 	/**
 	 * CONSTRUCTOR
@@ -670,96 +682,99 @@ class WordPHP
 				$f .="position: relative; top: -0.6em;font-weight: bold;";
 				$script = 'Y';
 			}
-			if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'w:drawing' ) { // Get a lower resolution image
-				$r = $this->checkImageFormating($reader);
-				if ($this->Icss == 'Y'){
-					$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
-				} else {
-					$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
-				}
-			}
-			if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:shape' ) { // get size of higher resolution image
-				$Psize = $reader->getAttribute("style");
-				$arr = explode(';', $Psize); // Get image size if $Psize was supplied to this function
-				$l = count($arr);
-				$d = 0;
-				while ($d < $l){
-					if (substr($arr[$d],0,5) == 'width' ) {
-						$Wtmp = substr($arr[$d],6);
-						$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
+			
+			if ($this->Icss <> 'O'){
+				if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'w:drawing' ) { // Get a lower resolution image
+					$r = $this->checkImageFormating($reader);
+					if ($this->Icss == 'Y'){
+						$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
+					} else {
+						$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
 					}
-					if (substr($arr[$d],0,6) == 'height' ) {
-						$Htmp = substr($arr[$d],7);
-						$ImgH = (float)substr($Htmp,0,-2) * 1.4;
+				}
+				if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:shape' ) { // get size of higher resolution image
+					$Psize = $reader->getAttribute("style");
+					$arr = explode(';', $Psize); // Get image size if $Psize was supplied to this function
+					$l = count($arr);
+					$d = 0;
+					while ($d < $l){
+						if (substr($arr[$d],0,5) == 'width' ) {
+							$Wtmp = substr($arr[$d],6);
+							$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
+						}
+						if (substr($arr[$d],0,6) == 'height' ) {
+							$Htmp = substr($arr[$d],7);
+							$ImgH = (float)substr($Htmp,0,-2) * 1.4;
+						}
+						if (substr($arr[$d],0,11) == 'margin-left' ) {
+							$Ltmp = substr($arr[$d],12);
+							$ImgL = substr($Ltmp,0,-2);
+						}
+						$d++;
 					}
-					if (substr($arr[$d],0,11) == 'margin-left' ) {
-						$Ltmp = substr($arr[$d],12);
-						$ImgL = substr($Ltmp,0,-2);
+				}
+				if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:imagedata') { // For high resolution images get image and cropping details if they exist
+					$relId = $reader->getAttribute("r:id");
+					$notfound = false;
+					if ($reader->getAttribute("croptop")){
+						$Ctop = substr($reader->getAttribute("croptop"),0,-1);
+						$TT = 'Y';
 					}
-					$d++;
-				}
-			}
-			if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:imagedata') { // For high resolution images get image and cropping details if they exist
-				$relId = $reader->getAttribute("r:id");
-				$notfound = false;
-				if ($reader->getAttribute("croptop")){
-					$Ctop = substr($reader->getAttribute("croptop"),0,-1);
-					$TT = 'Y';
-				}
-				if ($reader->getAttribute("cropbottom")){
-					$Cbot = substr($reader->getAttribute("cropbottom"),0,-1);
-					$Cbot = 64000 - $Cbot;
-					$TT = 'Y';
-				}
-				if ($reader->getAttribute("cropleft")){
-					$Cleft = substr($reader->getAttribute("cropleft"),0,-1);
-					$TT = 'Y';
-				}
-				if ($reader->getAttribute("cropright")){
-					$Cright = substr($reader->getAttribute("cropright"),0,-1);
-					$Cright = 64000 - $Cright;
-					$TT = 'Y';
-				}
-				if ($TT == 'Y'){
-					$Cwidth = $Cright - $Cleft;
-					$CwidthPC = $Cwidth / 64000;
-					$CleftPC = $Cleft /64000;
-					$Cheight = $Cbot - $Ctop;
-					$CheightPC = $Cheight / 64000;
-					$CtopPC = $Ctop /64000;
-					$Icrop['left'] = $CleftPC;
-					$Icrop['top'] = $CtopPC;
-					$Icrop['width'] = $CwidthPC;
-					$Icrop['height'] = $CheightPC;
-				}
-				if ($ImgL <> ''){
-				$Imgpos = ($ImgL < 50) ? "float:left;" : "float:right;";
-				}
-				$r['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 15px 10px 15px;'";
-				// image id found, get the image location
-				if (!$notfound && $relId) {
-					$reader = new XMLReader();
-					$reader->XML($this->rels_xml->saveXML());
-					while ($reader->read()) {
-						if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name=='Relationship') {
-							if($reader->getAttribute("Id") == $relId) {
-								$link = "word/".$reader->getAttribute('Target');
-								break;
+					if ($reader->getAttribute("cropbottom")){
+						$Cbot = substr($reader->getAttribute("cropbottom"),0,-1);
+						$Cbot = 64000 - $Cbot;
+						$TT = 'Y';
+					}
+					if ($reader->getAttribute("cropleft")){
+						$Cleft = substr($reader->getAttribute("cropleft"),0,-1);
+						$TT = 'Y';
+					}
+					if ($reader->getAttribute("cropright")){
+						$Cright = substr($reader->getAttribute("cropright"),0,-1);
+						$Cright = 64000 - $Cright;
+						$TT = 'Y';
+					}
+					if ($TT == 'Y'){
+						$Cwidth = $Cright - $Cleft;
+						$CwidthPC = $Cwidth / 64000;
+						$CleftPC = $Cleft /64000;
+						$Cheight = $Cbot - $Ctop;
+						$CheightPC = $Cheight / 64000;
+						$CtopPC = $Ctop /64000;
+						$Icrop['left'] = $CleftPC;
+						$Icrop['top'] = $CtopPC;
+						$Icrop['width'] = $CwidthPC;
+						$Icrop['height'] = $CheightPC;
+					}
+					if ($ImgL <> ''){
+						$Imgpos = ($ImgL < 50) ? "float:left;" : "float:right;";
+					}
+					$r['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 15px 10px 15px;'";
+					// image id found, get the image location
+					if (!$notfound && $relId) {
+						$reader = new XMLReader();
+						$reader->XML($this->rels_xml->saveXML());
+						while ($reader->read()) {
+							if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name=='Relationship') {
+								if($reader->getAttribute("Id") == $relId) {
+									$link = "word/".$reader->getAttribute('Target');
+									break;
+								}
 							}
 						}
 					}
-				}
 				
-				$zip = new ZipArchive();
-				$im = null;
-				if (true === $zip->open($this->file)) {
-					$r['image'] = $this->createImage($zip->getFromName($link), $relId, $link, $Icrop);
-				}
-				$zip->close();
-				if ($this->Icss == 'Y'){
-					$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
-				} else {
-					$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
+					$zip = new ZipArchive();
+					$im = null;
+					if (true === $zip->open($this->file)) {
+						$r['image'] = $this->createImage($zip->getFromName($link), $relId, $link, $Icrop);
+					}
+					$zip->close();
+					if ($this->Icss == 'Y'){
+						$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
+					} else {
+						$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
+					}
 				}
 			}
 			if ($reader->name == "w:t") { // Find text and also substitute any symbols found with their Unicode alternatives
@@ -931,7 +946,7 @@ class WordPHP
 			$reader->XML($node);
 			$LnumA = array();
 			$ListnumId = '';
-			static $Listcount = array();
+			static $Listcount = array(array());
 			static $numb_xml = null;
 		
 			while ($reader->read()){
@@ -1080,37 +1095,78 @@ class WordPHP
 		
   
 			if ($ListnumId){ // If the element is a list element get its number
-				if (substr($Rlvltxt[$Listlevel],0,1) <> '%'){ // Check if there is a character before the list number and if so get it
-					$LNfirst = substr($Rlvltxt[$Listlevel],0,1);
+				$LNfirst = $LNlast = $ListSep = '';
+				
+				$Rlvlen = strlen($Rlvltxt[$Listlevel]);
+				if (substr($Rlvltxt[$Listlevel],0,1) == '%' OR substr($Rlvltxt[$Listlevel],1,1) == '%'){ // Number based list
+					if (substr($Rlvltxt[$Listlevel],1,1) == '%'){ //Find if there is an initial character and if so get it
+						$LNfirst = substr($Rlvltxt[$Listlevel],0,1);
+						$ListNPos = 2;
+					} else {
+						$ListNPos = 1;
+					}
+					$ln = 0;
+					while ($ListNPos < $Rlvlen){
+						$ListNum[$ln] = substr($Rlvltxt[$Listlevel],$ListNPos,1) - 1;
+						if (($ListNPos + 2) < $Rlvlen) {
+							$ListSep = substr($Rlvltxt[$Listlevel],$ListNPos+1,1);
+							++$ln;
+						} else if (($ListNPos + 1) < $Rlvlen) {
+							$LNlast = substr($Rlvltxt[$Listlevel],$ListNPos+1,1);
+						}
+						$ListNPos = $ListNPos + 3;
+					}
+				} else if (is_numeric(substr($Rlvltxt[$Listlevel],0,1))){
+					$nc = 0;
+					$np = 0;
+					while ($np == 0){
+						if (substr($Rlvltxt[$Listlevel],$nc,1) == '%'){
+							$np = $nc-1;
+						}
+						++$nc;
+					}
+					$LNfirst = substr($Rlvltxt[$Listlevel],0,$np+1);
+					$ListNum[0] = substr($Rlvltxt[$Listlevel],$np+2,1) - 1;
+					if (($np+3) <= $Rlvlen){
+						$LNlast = substr($Rlvltxt[$Listlevel],$np+3,1);
+					}
 				} else {
-					$LNfirst = '';
+					$ListNum[0] = 0;
 				}
-				$LNlast = substr($Rlvltxt[$Listlevel],-1); // The last character of a list number
 				if (!isset($Listcount[$ListnumId][$Listlevel])){
-					$Listcount[$ListnumId][$Listlevel] = '';
+					$Listcount[$ListnumId][$Listlevel] = 0;
 				}
-				if ($Listcount[$ListnumId][$Listlevel] == ''){ // Get the list number of the list element
+				if ($Listcount[$ListnumId][$Listlevel] == 0){
+					// Get the list number of the list element
+					if (!isset($Rstart[$Listlevel])){ //Added
+						$Rstart[$Listlevel] = 0;
+					}
 					$Listcount[$ListnumId][$Listlevel] = $Rstart[$Listlevel];
-					$Listcount[$ListnumId][$Listlevel + 1] = '';
+					$Listcount[$ListnumId][$Listlevel + 1] = 0;
 				} else {
 					$Listcount[$ListnumId][$Listlevel] = $Listcount[$ListnumId][$Listlevel] + 1;
-					$Listcount[$ListnumId][$Listlevel + 1] = '';
+					$Listcount[$ListnumId][$Listlevel + 1] = 0;
 				}
-				if (strlen($Rlvltxt[$Listlevel]) > 4){
-					$Lcount = 0;
-				} else {
+				if ($Rnumfmt[$Listlevel] == 'bullet'){
 					$Lcount = $Listlevel;
+				} else {
+					$Lcount = $ListNum[0];
 				}
+				$Lnum = $LNfirst;
 				while ($Lcount <= $Listlevel){ // produce the list element number
-					$LnumA[$Lcount] = $Listcount[$ListnumId][$Lcount]; // The number of the list element
+					if (!isset($Listcount[$ListnumId][$Lcount])){
+						$LnumA[$Lcount] = $Rstart[$Lcount];
+					} else {
+						$LnumA[$Lcount] = $Listcount[$ListnumId][$Lcount]; // The number of the list element
+					}
 					if ($Rnumfmt[$Lcount] == 'lowerLetter'){
-						$LnumA[$Lcount] = $LNfirst.$alphabet[$LnumA[$Lcount]-1].$LNlast;
+						$LnumA[$Lcount] = $alphabet[$LnumA[$Lcount]-1];
 					} else if ($Rnumfmt[$Lcount] == 'upperLetter'){
-						$LnumA[$Lcount] = $LNfirst.strtoupper($alphabet[$LnumA[$Lcount]-1].$LNlast);
+						$LnumA[$Lcount] = strtoupper($alphabet[$LnumA[$Lcount]-1]);
 					} else if ($Rnumfmt[$Lcount] == 'lowerRoman'){
-						$LnumA[$Lcount] = $LNfirst.$this->numberToRoman($LnumA[$Lcount]).$LNlast;
+						$LnumA[$Lcount] = $this->numberToRoman($LnumA[$Lcount]);
 					} else if ($Rnumfmt[$Lcount] == 'upperRoman'){
-						$LnumA[$Lcount] = $LNfirst.strtoupper($this->numberToRoman($LnumA[$Lcount])).$LNlast;
+						$LnumA[$Lcount] = strtoupper($this->numberToRoman($LnumA[$Lcount]));
 					} else if ($Rnumfmt[$Lcount] == 'bullet'){
 						if (substr (PHP_VERSION,0,3) >= '7.2'){
 							if (mb_ord($Rlvltxt[$Lcount])-61440 == 252){
@@ -1125,22 +1181,27 @@ class WordPHP
 								$LnumA[$Lcount] = mb_chr(10070);
 							} else if (mb_ord($Rlvltxt[$Lcount]) == 111){
 								$LnumA[$Lcount] = $Rlvltxt[$Lcount];
+							} else if (mb_ord($Rlvltxt[$Lcount]) == 45){
+								$LnumA[$Lcount] = $Rlvltxt[$Lcount];
 							} else {
 								$LnumA[$Lcount] = "◾";
 							}
 						} else {
 							$LnumA[$Lcount] = "◾";
 						}
-					} else {
-						$LnumA[$Lcount] = $LNfirst.$LnumA[$Lcount].$LNlast;
 					}
-					$Lnum .= $LnumA[$Lcount];
+					if ($Rlvlen <> 0){
+						$Lnum .= $LnumA[$Lcount];
+						if ($Lcount < $Listlevel){
+							$Lnum .= $ListSep;
+						}
+					}
 					$Lcount++;
 				}
-				$Lnum = $Lnum."&nbsp;&nbsp;&nbsp;";
-		
+				if ($Rlvlen <> 0){
+					$Lnum = $Lnum.$LNlast."&nbsp;&nbsp;&nbsp;";
+				}
 			}
-		
 			$PSret['Lnum'] = $Lnum;  // return the element's list number
 			$PSret['listnum'] = $ListnumId;
 		}
@@ -1345,6 +1406,7 @@ class WordPHP
 	private function createImage($image, $relId, $name, $crop)
 	{
 		static $Ccount = 1;
+		$fname = '';
 		$arr = explode('.', $name);
 		$l = count($arr);
 		$ext = strtolower($arr[$l-1]);
@@ -1353,39 +1415,61 @@ class WordPHP
 			mkdir($this->tmpDir, 0755, true);
 		}
 
-		$im = imagecreatefromstring($image);
-		if (isset($crop['left'])){
-			$Iwidth = imagesx($im);
-			$Iheight = imagesy($im);
-			$Cx = round($crop['left'] * $Iwidth, 0);
-			$Cy = round($crop['top'] * $Iheight, 0);
-			$Cw = round($crop['width'] * $Iwidth, 0);
-			$Ch = round($crop['height'] * $Iheight, 0);
-			$im = imagecrop($im, ['x' => $Cx, 'y' => $Cy, 'width' => $Cw, 'height' => $Ch]);
-			$fname = $this->tmpDir.'/'.$relId.$Ccount.'.'.$ext;
-			$Ccount++;
-		} else {		
-			$fname = $this->tmpDir.'/'.$relId.'.'.$ext;
-		}
+		if ($ext == 'emf' OR $ext == 'wmf'){
+			$ftname = $this->tmpDir.'/'.$relId.'.'.$ext;
+			$tfile = fopen($ftname, "w");
+			fwrite($tfile, $image);
+			fclose($tfile);
+			
+			$fname = $this->tmpDir.'/'.$relId.'.jpg';
+			if ($ext == 'wmf'){ // Note that Imagick will only convert '.wmf' files (NOT '.emf' files)
+				$imagick = new Imagick();
+				$imagick->setresolution(300, 300);
+				$imagick->readImage($ftname);
+				$imagick->resizeImage(1000,0,Imagick::FILTER_LANCZOS,1);
+				$imagick->setImageFormat('jpg');
+				$imagick->writeImage($fname);
+			}
+			
 
-		switch ($ext) {
-			case 'png':
-				imagepng($im, $fname);
-				break;
-			case 'bmp':
-				imagebmp($im, $fname);
-				break;
-			case 'gif':
-				imagegif($im, $fname);
-				break;
-			case 'jpeg':
-			case 'jpg':
-				imagejpeg($im, $fname);
-				break;
-			default:
-				return null;
+		} else {
+			$im = imagecreatefromstring($image);
+			if (isset($crop['left'])){
+				$Iwidth = imagesx($im);
+				$Iheight = imagesy($im);
+				$Cx = round($crop['left'] * $Iwidth, 0);
+				$Cy = round($crop['top'] * $Iheight, 0);
+				$Cw = round($crop['width'] * $Iwidth, 0);
+				$Ch = round($crop['height'] * $Iheight, 0);
+				$im = imagecrop($im, ['x' => $Cx, 'y' => $Cy, 'width' => $Cw, 'height' => $Ch]);
+				$fname = $this->tmpDir.'/'.$relId.$Ccount.'.'.$ext;
+				$Ccount++;
+			} else {		
+				$fname = $this->tmpDir.'/'.$relId.'.'.$ext;
+			}
+
+			switch ($ext) {
+				case 'png':
+					imagepng($im, $fname);
+					break;
+				case 'bmp':
+					imagebmp($im, $fname);
+					break;
+				case 'gif':
+					imagegif($im, $fname);
+					break;
+				case 'jpeg':
+				case 'jpg':
+					imagejpeg($im, $fname);
+					break;
+				case 'webp':
+					imagewebp($im, $fname);
+					break;
+				default:
+					return null;
+			}
+			imagedestroy($im);
 		}
-		imagedestroy($im);
 		return $fname;
 	}
 
@@ -1504,7 +1588,7 @@ class WordPHP
 	private function getParagraph(&$paragraph,$Tstyle)
 	{
 		$zst = array();
-		$text = $BookMk = $BookRet = $Pstyle = $zst[0] = $CBdef = $CBdef = '';
+		$text = $BookMk = $BookRet = $Pstyle = $zst[0] = $CBdef = $CBdef = $Mpara = $MP = '';
 		$list_format=array();
 		$zzz = $text;
 		$zstc = 1;
@@ -1568,8 +1652,7 @@ class WordPHP
 			} else if($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:pPr') { // Get list and paragraph formatting
 				$list_format = $this->getListFormating($paragraph,$Tstyle);
 				$Pformat = 'Y';
-			} 
-			else if($paragraph->name == "w:bookmarkStart") { // check for internal bookmark link and its return
+			} else if($paragraph->name == "w:bookmarkStart") { // check for internal bookmark link and its return
 				$BM = $paragraph->getAttribute("w:name");
 				if (substr($BM,0,1) == '_'){
 					$BookL = substr($BM,1);
@@ -1582,8 +1665,7 @@ class WordPHP
 						$BookRet = "&nbsp;<a href='#R".$BookL."'><sup>[return]</a>";
 					}
 				}
-			}
-			else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:hyperlink') {
+			} else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:hyperlink') {
 				if ($Pformat == 'Y'){ // Add in paragraph formatting for Bookmark links 
 					if ($list_format['Pform'] <> ''){
 						$text = "<p".$list_format['Pform'].">"; // brings in paragraph formatting
@@ -1615,8 +1697,7 @@ class WordPHP
 				$text .= $Pelement2['text'];
 				$text .= $hyperlink['close'];
 				$paragraph->next();
-			}
-			else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:checkBox') {
+			} else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:checkBox') {
 				$cb2 = new SimpleXMLElement($paragraph->readOuterXML());
 				foreach ($cb2->children('w',true) as $ch) {
 					if (in_array($ch->getName(), ['default']) ) {
@@ -1628,15 +1709,24 @@ class WordPHP
 				} else {
 					$text .= "<input type=\"checkbox\" checked>";
 				}
+			} else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'm:oMathPara') {
+				$Mpara = 'Y';
+			} else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'm:oMath') {
+				$Melement = $this->getMaths($paragraph, $Mpara);
+				$text .= $Melement;
+				$MP = 'Y';
+				$this->Maths = 'Y';
 			}
 		}
 		if ($zzz == $text){
-			$text .= "<p".$Dstyle['Pform'].">&nbsp;</p> ";
+			$text .= "<p".$Dstyle['Pform'].">&nbsp;</p> \n";
 		} else {
 			if (substr($text,-1) == '>'){
-				$text .= "&nbsp;</span>".$BookRet."</p> ";
+				$text .= "&nbsp;</span>".$BookRet."</p> \n";
+			} else if ($MP == 'Y'){
+				$text .= "  \n";
 			} else {
-				$text .= "</span>".$BookRet."</p> ";
+				$text .= "</span>".$BookRet."</p> \n";
 			}
 		}
 		return $text;
@@ -1644,6 +1734,669 @@ class WordPHP
 			
 
 // ------------------- END OF PARAGRAPH PROCESSING ------------------------
+
+// ------------------- START OF MATHS PROCESSING ------------------------
+
+	/**
+	 * CHECKS THE MATHS FUNCTION OF A GIVEN ELEMENT
+	 * 
+	 * @param XML $xml - The XML node
+	 * @param String $Pstyle - The name of the paragraph style
+	 * @param String $Dcap - The type of drop capital if it exists
+	 * @return Array - The elements styling and text
+	 */
+	private function getMaths(&$xml, $Mpara)
+	{	
+		
+		$Mintegral = $MintSS = $MIsubL = $MIsupL = $MIsup = $MIsub = $Msub = $Msup = $Echr = $Mlimit = $Mchr = $Bchr = $MuO = $DSmaths = $MaccC = $MaccT = $MaccC = $MGC = $MGL = $Mfunc= $MFnb = $Mear = $Me = $Begch = $Endch = $MdivT = $MuON = $Limpos = '';
+		$Mroot = $Elevel = $Mden = $Mnum = $MMcol = 0;
+		$MRexp = array();
+		if ($Mpara == 'Y'){
+			$Dmaths = "\[";
+		} else {
+			$Dmaths = "\(";
+		}
+		$node = trim($xml->readOuterXML());
+		$reader = new XMLReader();
+		$reader->XML($node);
+		while ($reader->read()) {
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:naryPr') { //get maths integral funtion
+				$mf = new XMLReader;
+				$mf->xml(trim($reader->readOuterXML()));
+				while ($mf->read()) {
+					if ($mf->nodeType == XMLREADER::ELEMENT && $mf->name === 'm:chr') { //get integral function type
+						$Mintegral = $mf->getAttribute("m:val");
+					}
+					if ($mf->nodeType == XMLREADER::ELEMENT && $mf->name === 'm:limLoc') { //get integral function limits
+						$MintSS = $mf->getAttribute("m:val");
+						if ($MintSS == 'undOvr'){
+							$MuO = '\limits';
+						}
+						if ($MintSS == 'subSup'){
+							$MuON = '\nolimits';
+						}
+						if ($MintSS == 'subSup' OR $MintSS == 'undOvr'){
+							$MIsubL = 'Y';
+							$MIsupL = 'Y';
+						} else {
+							$MIsubL = 'N';
+							$MIsupL = 'N';
+						}
+					}
+					if ($mf->nodeType == XMLREADER::ELEMENT && $mf->name === 'm:subHide') {  
+						$MSbH = $mf->getAttribute("m:val");
+						if ($MSbH == 1){
+							$MIsubL = 'N';
+						}
+					}
+					if ($mf->nodeType == XMLREADER::ELEMENT && $mf->name === 'm:supHide') {  
+						$MSpH = $mf->getAttribute("m:val");
+						if ($MSpH == 1){
+							$MIsupL = 'N';
+						}
+					}
+					if ($mf->nodeType == XMLREADER::ELEMENT && $mf->name === 'm:grow') { //get integral function limits
+						$Mgrow = $mf->getAttribute("m:val");
+						if ($Mgrow == '1'){
+							$MIsubL = 'Y';
+							$MIsupL = 'Y';
+						} else {
+							$MIsubL = 'N';
+							$MIsupL = 'N';
+						}
+					}
+				}
+				if ($Mintegral == ''){
+					$Dmaths .= "\int".$MuO;
+				} else {
+					if ($Mintegral == '∬'){
+						$Dmaths .= "\iint".$MuO;
+					} else if ($Mintegral == '∭'){
+						$Dmaths .= "\iiint".$MuO;
+					} else if ($Mintegral == '∮'){
+						$Dmaths .= "\oint".$MuO;
+					} else if ($Mintegral == '∯'){
+						$Dmaths .= "\oint\oint".$MuO;
+					} else if ($Mintegral == '∰'){
+						$Dmaths .= "\oint\oint\oint".$MuO;
+					} else if ($Mintegral == '∑'){
+						$Dmaths .= "\sum".$MuON;
+						if ($MIsubL <> 'N'){
+							$MIsubL = 'Y';
+						}
+					} else if ($Mintegral == '∏'){
+						$Dmaths .= "\prod".$MuON;
+					} else if ($Mintegral == '∐'){
+						$Dmaths .= "\coprod".$MuON;
+					} else if ($Mintegral == '⋁'){
+						$Dmaths .= "\bigvee".$MuON;
+					} else if ($Mintegral == '⋀'){
+						$Dmaths .= "\bigwedge".$MuON;
+					} else if ($Mintegral == '⋃'){
+						$Dmaths .= "\bigcup".$MuON;
+					} else if ($Mintegral == '⋂'){
+						$Dmaths .= "\bigcap".$MuON;
+					}
+				}
+				$MuON = $MuO = '';
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:sub') { 
+				if ($MIsubL == 'Y'){ //get start of maths subscript
+					$Dmaths .= "_{";
+					$MsubF = 'Y';
+					$MIsub = '';
+				} else if ($MIsubL == 'N'){
+					$Dmaths .= "";
+					$MIsubL = '';
+				} else if ($MIsubL == ''){
+					$Dmaths .= "_{";
+				}
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:sub') {
+				if ($MIsubL == '' OR $MIsubL == 'Y'){
+					$Dmaths .= "}";
+				} else {
+					$MIsubL = '';
+				}
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:sup') { //get start of maths superscript
+				if ($MIsupL == 'Y'){
+					$Dmaths .= "^{";
+					$MsupF = 'Y';
+					$MIsup = '';
+				} else if ($MIsupL == 'N'){
+					$Dmaths .= "";
+					$MIsupL = '';
+				} else if ($MIsupL == ''){
+					$Dmaths .= "^{";
+				}				
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:sup') {
+				if ($MIsupL == '' OR $MIsupL == 'Y'){
+					$Dmaths .= "}";
+				} else {
+					$MIsupL = '';
+				}
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:d') {
+				$Bchr = $Echr = $Begch = $Endch = '';
+				$mbrack = new XMLReader;
+				$mbrack->xml(trim($reader->readOuterXML()));
+				while ($mbrack->read()) {
+					if ($mbrack->name == 'm:begChr') { //check for alternative beginning bracket chr 
+						$Bchr = $mbrack->getAttribute("m:val");
+						$Begch = 'Y';
+					}
+					if ($mbrack->name == 'm:endChr') { //check for alternative ending bracket chr 
+						$Echr = $mbrack->getAttribute("m:val");
+						$Endch = 'Y';
+					}
+				}
+				$Dmaths .= "\left";
+				if ($Begch == 'Y'){
+					if ($Bchr == ''){
+						$Dmaths .= ".";
+					} else if ($Bchr == '{'){ //left brace
+						$Dmaths .= "\{ ";
+					} else if ($Bchr == '}'){ //right brace
+						$Dmaths .= "\} ";
+					} else if ($Bchr == '〈' OR $Bchr == '⟨'){ //left angle
+						$Dmaths .= "\langle ";
+					} else if ($Bchr == '〉' OR $Bchr == '⟩'){ //right angle
+						$Dmaths .= "\\rangle ";
+					} else if ($Bchr == '⌊'){ //left floor
+						$Dmaths .= "\lfloor ";
+					} else if ($Bchr == '⌋'){ //right floor
+						$Dmaths .= "\\rfloor ";
+					} else if ($Bchr == '⌈'){ //left ceil
+						$Dmaths .= "\lceil ";
+					} else if ($Bchr == '⌉'){ //right ceil
+						$Dmaths .= "\\rceil ";
+					} else if ($Bchr == '‖' OR $Bchr == '⟦' OR $Bchr == '⟧'){ //double pipe
+						$Dmaths .= "\Vert ";
+					} else {
+						$Dmaths .= $Bchr;
+					}
+				} else {
+					$Bchr = "(";
+					$Dmaths .= $Bchr;
+				} 
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:d') {
+				if ($Endch == 'Y'){
+					$Endch = '';
+					$Dmaths .= "\\right";
+					if ($Echr == ''){
+						$Dmaths .= ".";
+					} else if ($Echr == '{'){ //left brace
+						$Dmaths .= "\{ ";
+					} else if ($Echr == '}'){ //right brace
+						$Dmaths .= "\} ";
+					} else if ($Echr == '〈' OR $Echr == '⟨'){ //left angle
+						$Dmaths .= "\langle ";
+					} else if ($Echr == '〉' OR $Echr == '⟩'){ //right angle
+						$Dmaths .= "\\rangle ";
+					} else if ($Echr == '⌊'){ //left floor
+						$Dmaths .= "\lfloor ";
+					} else if ($Echr == '⌋'){ //right floor
+						$Dmaths .= "\\rfloor ";
+					} else if ($Echr == '⌈'){ //left ceil
+						$Dmaths .= "\lceil ";
+					} else if ($Echr == '⌉'){ //right ceil
+						$Dmaths .= "\\rceil ";
+					} else if ($Echr == '‖' OR $Echr == '⟦' OR $Echr == '⟧'){ //double pipe
+						$Dmaths .= "\Vert ";
+					} else {
+						$Dmaths .= $Echr." ";
+					}
+					$MMcol = 0;
+				} else {
+					$Echr = ")";
+					$Dmaths .= "\\right";
+					$Dmaths .= $Echr." ";
+					$MMcol = 0;
+				}
+				$Bchr = '';
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:eqArr') {
+				$Mear = 'Y';
+				if ($Begch == ''){
+					$Dmaths .= "\\left.\begin{matrix}";
+				} else {
+					$Dmaths .= "\begin{matrix}";
+				}
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:eqArr') {
+				$Mear = '';
+				if ($Endch == ''){
+					$Dmaths .= "\\end{matrix}\\right.";
+				} else {
+					$Dmaths .= "\\end{matrix}";
+				}
+			}
+			if ($Mroot == 0){
+				if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:deg') {
+					$mroot = new XMLReader;
+					$mroot->xml(trim($reader->readOuterXML()));
+					while ($mroot->read()) {
+						if ($mroot->name == 'm:t') { //get level of root 
+							$Tmptext1 = htmlentities($mroot->expand()->textContent);
+							$Mroot .= preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
+						}
+					}
+					$Mroot = intval($Mroot);
+					$Dmaths .= "\sqrt[".$Mroot."]";
+				}
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:degHide') {
+				$Mtroot = $reader->getAttribute("m:val");
+				$Dmaths .= "\sqrt";
+				$Mroot = 2;
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:func') {
+				$Mfunc = 'Y';
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:func') {
+				$Mfunc = '';
+				$Dmaths .= "\,";
+			}
+			if ($MGL == ''){
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:lim') {
+				$mlim = new XMLReader;
+				$mlim->xml(trim($reader->readOuterXML()));
+				while ($mlim->read()) {
+					if ($mlim->name == 'm:t') { //get limit value 
+						$Tmptext1 = htmlentities($mlim->expand()->textContent);
+						$Mlimit .= preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
+					}
+				}
+			}
+			}
+
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:acc') {
+				$macc = new XMLReader;
+				$macc->xml(trim($reader->readOuterXML()));
+				$MaccT = '';
+				while ($macc->read()) {
+					if ($macc->name == 'm:chr') { 
+						$MaccC = $macc->getAttribute("m:val");
+					}
+					if ($macc->name == 'm:t') { //get limit value 
+						$Tmptext1 = htmlentities($macc->expand()->textContent);
+						$MaccT .= preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
+					}
+				}
+				switch($MaccC) {
+					case "̃":
+						$Dmaths .= "\\tilde{".$MaccT."}";
+						break;
+					case "→":
+						$Dmaths .= "\hat{".$MaccT."}";
+						break;
+					case "̌":
+						$Dmaths .= "\check{".$MaccT."}";
+						break;
+					case "→":
+						$Dmaths .= "\vec{".$MaccT."}";
+						break;
+					case "̅":
+						$Dmaths .= "\bar{".$MaccT."}";
+						break;
+					case "́":
+						$Dmaths .= "\acute{".$MaccT."}";
+						break;
+					case "̀":
+						$Dmaths .= "\grave{".$MaccT."}";
+						break;
+					case "̆":
+						$Dmaths .= "\breve{".$MaccT."}";
+						break;
+					case "̇":
+						$Dmaths .= "\dot{".$MaccT."}";
+						break;
+					case "̈":
+						$Dmaths .= "\ddot{".$MaccT."}";
+						break;
+					case "⃛":
+						$Dmaths .= "\dddot{".$MaccT."}";
+						break;
+					case "⃖":
+						$Dmaths .= "\overleftarrow{".$MaccT."}";
+						break;
+					case "⃗":
+						$Dmaths .= "\overrightarrow{".$MaccT."}";
+						break;
+					case "⃡":
+						$Dmaths .= "\overleftrightarrow{".$MaccT."}";
+						break;
+					case "⃐":
+						$Dmaths .= "\overset{\leftharpoonup}{".$MaccT."}";
+						break;
+					case "⃑":
+						$Dmaths .= "\overset{\\rightharpoonup}{".$MaccT."}";
+						break;
+				}
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:acc') {
+				$MaccC = '';
+			}
+
+			
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:borderBox') {
+				$Dmaths .= "\boxed{";
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:borderBox') {
+				$Dmaths .= "}";
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:bar') {
+				$Dmaths .= "\underline{";
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:bar') {
+				$Dmaths .= "}";
+			}
+
+
+			if ($MGL == ''){
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:groupChr') {
+				$MGC = 'Y';
+				$MchT = '';
+				$Mpos = $Mchr = '';
+				$mgch = new XMLReader;
+				$mgch->xml(trim($reader->readOuterXML()));
+				while ($mgch->read()) {
+					if ($mgch->name == 'm:chr') { 
+						$Mchr = $mgch->getAttribute("m:val");
+					}
+					if ($mgch->name == 'm:pos') { 
+						$Mpos = $mgch->getAttribute("m:val");
+					}
+					if ($mgch->name == 'm:vertJc' AND $Mpos == '') { 
+						$Mpos = $mgch->getAttribute("m:val");
+					}
+					if ($mgch->name == 'm:t') { 
+						$Tmptext1 = htmlentities($mgch->expand()->textContent);
+						$MchT .= preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
+					}
+				}
+				if ($Mchr == "←" AND $Mpos == 'top'){
+					$Dmaths .= "\xleftarrow[".$MchT."]{ }";
+				} else if ($Mchr == "←" AND $Mpos == 'bot'){
+					$Dmaths .= "\xleftarrow{".$MchT."}\;";
+				} else if ($Mchr == "→" AND $Mpos == 'top'){
+					$Dmaths .= "\xrightarrow[".$MchT."]{ }";
+				} else if ($Mchr == "→" AND $Mpos == 'bot'){
+					$Dmaths .= "\xrightarrow{".$MchT."}\;";
+				} else if ($Mchr == "⇐" AND $Mpos == 'top'){
+					$Dmaths .= "\xLeftarrow[".$MchT."]{ }";
+				} else if ($Mchr == "⇐" AND $Mpos == 'bot'){
+					$Dmaths .= "\xLeftarrow{".$MchT."}\;";
+				} else if ($Mchr == "⇒" AND $Mpos == 'top'){
+					$Dmaths .= "\xRightarrow[".$MchT."]{ }";
+				} else if ($Mchr == "⇒" AND $Mpos == 'bot'){
+					$Dmaths .= "\xRightarrow{".$MchT."}\;";
+				} else if ($Mchr == "↔" AND $Mpos == 'top'){
+					$Dmaths .= "\xleftrightarrow[".$MchT."]{ }";
+				} else if ($Mchr == "↔" AND $Mpos == 'bot'){
+					$Dmaths .= "\xleftrightarrow{".$MchT."}\;";
+				} else if ($Mchr == "⇔" AND $Mpos == 'top'){
+					$Dmaths .= "\xLeftrightarrow[".$MchT."]{ }";
+				} else if ($Mchr == "⇔" AND $Mpos == 'bot'){
+					$Dmaths .= "\xLeftrightarrow{".$MchT."}\;";
+				} else if ($Mchr == "⏞" AND $Mpos == 'top'){
+					$Dmaths .= "\overbrace{".$MchT."}";
+				} else if ($Mchr == "" AND $Mpos == ''){
+					$Dmaths .= "\underbrace{".$MchT."}\;";
+				}
+			}
+			}
+
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:groupChr') {
+				$MGC = '';
+			}
+			if ($Mfunc == ''){
+			if (($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:limUpp') OR ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:limLow')) {
+				$MLchr = $MLpos = $mlim = $MluT = $MlimT = '';
+				$MGL = 'Y';
+				$mlup = new XMLReader;
+				$mlup->xml(trim($reader->readOuterXML()));
+				while ($mlup->read()) {
+					if ($mlup->name == 'm:chr') { 
+						$MLchr = $mlup->getAttribute("m:val");
+					}
+					if ($mlup->name == 'm:pos') { 
+						$MLpos = $mlup->getAttribute("m:val");
+					}
+					if ($mlup->name == 'm:lim') { 
+						$mlim = 'Y';
+					}
+					if ($mlim == ''){
+						if ($mlup->name == 'm:t') { 
+							$Tmptext1 = htmlentities($mlup->expand()->textContent);
+							$MluT .= preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
+						}
+					}
+					if ($mlim == 'Y'){
+						if ($mlup->name == 'm:t') { 
+							$Tmptext2 = htmlentities($mlup->expand()->textContent);
+							$MlimT .= preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext2);
+						}
+					}
+				}
+				if ($MLchr == ''){
+					$Dmaths .= "\underbrace{".$MluT ."}_\\text{".$MlimT."}";
+					
+				} else {
+					$Dmaths .= "\overbrace{".$MluT ."}^\\text{".$MlimT."}";
+				}
+			}
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:limUpp'){
+				$Limpos = 'top';				
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:limLow'){
+				$Limpos = 'bot';				
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:limUpp' OR ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:limLow')) {
+				$MGL = '';
+			}
+			if ($Me == 'Y' OR $Me == '2') {
+				if (($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:e') AND $Mear =='' AND $MMcol == 0 AND $Bchr <> '') {
+					$Dmaths .= " | ";
+					$Me = '';
+				}
+				if ($Me == 'Y'){
+					$Me = '2';
+				} else {
+					$Me = '';
+				}
+			}		
+					
+
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:e') {
+				++$Elevel;
+				if ($Mroot <> 0){
+					$MRexp[$Elevel] = 'Y';
+					$Mroot = 0;
+					$Dmaths .= "{";
+				}
+				if ($Mlimit <> ''){
+					if($Limpos == 'top'){
+						$Dmaths .= "^{".$Mlimit."}";
+					} else {
+						$Dmaths .= "_{".$Mlimit."}";
+					}
+					$Mlimit = '';
+					$Limpos = '';
+				}
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:e') {
+				if (isset($MRexp[$Elevel])){
+					if ($MRexp[$Elevel] == 'Y'){
+						$Dmaths .= "}";
+						$MRexp[$Elevel] = '';		
+					}					
+				}
+				if ($Mear == 'Y'){
+					$Dmaths .= "\\\ ";
+				}
+				--$Elevel;
+				$Me = 'Y';
+			}
+
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:type') {
+				$Mtype = $reader->getAttribute("m:val");
+				if ($Mtype == 'noBar'){
+					$MFnb = 'Y';
+				}
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT	&& $reader->name == 'm:type') {
+				$MdivT = $reader->getAttribute("m:val");
+			}
+		
+			if ($reader->nodeType == XMLREADER::ELEMENT	&& $reader->name == 'm:num') {
+				++$Mnum;
+				if ($MFnb == 'Y'){
+					$Dmaths .= "{{";
+				} else if ($MdivT == 'lin'){
+					$Dmaths .= " {";
+				} else if ($MdivT == 'skw'){
+					$Dmaths .= " \\raise 4pt {";
+				} else {
+					$Dmaths .= " \\frac{";
+				}
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:num') {
+				--$Mnum;
+				if ($MdivT == 'lin' OR $MdivT == 'skw'){
+				$Dmaths .= "} / ";
+				} else {
+				$Dmaths .= "}";
+				}
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:den') {
+				++$Mden;
+				if ($MFnb == 'Y'){
+					$Dmaths .= "\atop{";
+				} else if ($MdivT == 'skw'){
+					$Dmaths .= " \lower 4pt {";
+				} else {
+					$Dmaths .= "{";
+				}
+				$MdivT = '';
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:den') {
+				--$Mden;
+				if ($MFnb == 'Y'){
+					$Dmaths .= "}}";
+				} else {
+					$Dmaths .= "}";
+				}
+				$MFnb = '';
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:m') { // find matrix
+				$mat = new XMLReader;
+				$mat->xml(trim($reader->readOuterXML()));
+				$Mc = 0;
+				$Dmaths .= "\begin{matrix}";
+				while ($mat->read()) {
+					if ($mat->name == 'm:count') { 
+						$MMcol = $mat->getAttribute("m:val");
+					}
+					if ($mat->nodeType == XMLREADER::ELEMENT && $mat->name == 'm:e') {
+						$mrt = new XMLReader;
+						$mrt->xml(trim($mat->readOuterXML()));
+						$Tmptext1 = '';
+						while ($mrt->read()) {
+							if ($mrt->name == 'm:t') { 
+								$Tmptext1 .= htmlentities($mrt->expand()->textContent);
+							}
+						}
+						$DSmaths = preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
+						if ($DSmaths == ''){
+							$DSmaths = ' ';
+						}
+						$Dmaths .= $DSmaths;
+						if ($Mc <> $MMcol - 1){
+							$Dmaths .= " & ";
+						} else {
+							$Dmaths .= "\\\ ";
+						}
+						++$Mc;
+						if ($Mc == $MMcol){
+							$Mc = 0;
+						}
+					}
+				}
+				$Dmaths .= " \\end{matrix}";
+			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:m') { // find end of matrix
+				if ($Bchr == ''){
+					$MMcol = 0;
+				}
+			}
+
+			if ($Mroot == 0 AND $Mlimit == '' AND $MaccC == '' AND $MGC == '' AND $MGL == '' AND $MMcol == 0){
+				if ($reader->name == 'm:t') { //get maths text 
+					$Tmptext1 = htmlentities($reader->expand()->textContent);
+					$MItext = preg_replace('~(?<=\s)\s~', '\;', $Tmptext1);
+					$MItext = str_replace(' ','\;',$MItext);
+					if ($Mfunc <> ''){
+						if ($MItext == 'ln'){
+							$Dmaths .= '\ln';
+						} else if ($MItext == 'sin'){
+							$Dmaths .= '\sin';
+						} else if ($MItext == 'cos'){
+							$Dmaths .= '\cos';
+						} else if ($MItext == 'tan'){
+							$Dmaths .= '\tan';
+						} else if ($MItext == 'sinh'){
+							$Dmaths .= '\sinh';
+						} else if ($MItext == 'cosh'){
+							$Dmaths .= '\cosh';
+						} else if ($MItext == 'tanh'){
+							$Dmaths .= '\tanh';
+						} else if ($MItext == 'csch'){
+							$Dmaths .= '\textnormal{csch}\,';
+						} else if ($MItext == 'sech'){
+							$Dmaths .= '\textnormal{sech}\,';
+						} else if ($MItext == 'coth'){
+							$Dmaths .= '\coth';
+						} else if ($MItext == 'csc'){
+							$Dmaths .= '\csc';
+						} else if ($MItext == 'sec'){
+							$Dmaths .= '\sec';
+						} else if ($MItext == 'cot'){
+							$Dmaths .= '\cot';
+						} else if ($MItext == 'min'){
+							$Dmaths .= '\min';
+						} else if ($MItext == 'max'){
+							$Dmaths .= '\max';
+						} else if ($MItext == 'lim'){
+							$Dmaths .= '\lim';
+						} else if ($MItext == 'log'){
+							$Dmaths .= '\log';
+						} else {
+							if ($MItext <> ''){
+								$Dmaths .= "{".$MItext."}";	
+							}								
+						}
+					} else {
+						$MIt1 = str_replace('{','\\{',$MItext);
+						$MIt2 = str_replace('}','\\}',$MIt1);
+						$Dmaths .= $MIt2;
+					}
+				}
+			}
+
+		}
+		if ($Mpara == 'Y'){
+			$Dmaths .= "\]";
+		} else {
+			$Dmaths .= "\)";
+		}
+		return $Dmaths;
+	}
+
 
 // ------------------- START OF TABLE PROCESSING ------------------------
 
@@ -1659,6 +2412,7 @@ class WordPHP
 		$ztext = new XMLReader;
 		$ztext->xml($content);
 		$Trow = 0;
+		$hm = '';
 		while ($ztext->read()) {
 			if ($ztext->nodeType == XMLREADER::ELEMENT && $ztext->name === 'w:tr') { //find rows in the table
 				$Trow++;
@@ -1668,7 +2422,17 @@ class WordPHP
 				$Tcol++;
 				$cell[$Trow][$Tcol] = 1;
 			}
-			if ($ztext->name === 'w:vMerge') { //find merged cells in the table
+			if ($ztext->nodeType <> XMLREADER::ELEMENT && $ztext->name === 'w:tc') {
+				if ($hm <> ''){
+					$Tcol = $Tcol + $hm - 1;
+					$hm = '';
+				}
+			}				
+			if ($ztext->nodeType == XMLREADER::ELEMENT && $ztext->name === 'w:gridSpan') { //find horizontal merged cells in the table
+				$hm = $ztext->getAttribute("w:val");
+			}
+			
+			if ($ztext->name === 'w:vMerge') { //find vertical merged cells in the table
 				if ($ztext->getAttribute("w:val") == 'restart'){
 					$mrow[$Tcol] = $Trow;
 				} else {
@@ -1784,6 +2548,8 @@ class WordPHP
 					} else {
 						$Tstile['right'] = '';
 					}
+				} 
+				if (isset($Tstile['right'])){
 				}
 				if (!isset($Tstile['insideH'])){
 					if (isset($this->Rstyle[$Tstyle]['BinsideH'])){
@@ -1825,6 +2591,9 @@ class WordPHP
 					}
 
 					if ($tr->nodeType == XMLREADER::ELEMENT && $tr->name === 'w:tc') { //get cell borders and cell text and its formatting
+						$TCoffset = 0;
+						unset($ts);
+
 						$tc = $this->processTableRow(trim($tr->readOuterXML()),$Tstyle);
 					}
 					$style = '';
@@ -1892,7 +2661,11 @@ class WordPHP
 							}
 							$table .= $tc['align']."'>".$tc['cell']."</td>";
 						}
-						$Tcol++;
+						if (isset($ts['colspan'])){
+							$Tcol = $Tcol + $ts['colspan'];
+						} else {
+							$Tcol++;
+						}
 					}
 				}
 				$table .= "</tr>";
@@ -2104,8 +2877,18 @@ class WordPHP
 			exit("Cannot find file : ".$filename." ");
 		}
 		$this->file = $filename; // makes the filename available throughout the class
-		$this->Icss = substr($imgcss,0,1); // A 'Y' enables images to be styled by external CSS
-		$this->Tcss = substr($imgcss,1,1); //A 'Y' makes tables to be 100% width
+		$OptLen = Strlen($imgcss);
+		$this->Icss = substr($imgcss,0,1); // A 'Y' enables images to be styled by external CSS and an 'O' inhibits the display of images
+		if ($OptLen > 1){
+			$this->Tcss = substr($imgcss,1,1); //A 'Y' makes tables to be 100% width
+		} else {
+			$this->Tcss = 'N';
+		}
+		if ($OptLen > 2){
+			$this->Hcss = substr($imgcss,2,1); //Puts an full HTML header on the resultant html
+		} else {
+			$this->Hcss = 'N';
+		}
 		$this->readZipPart(); // Makes the document and relationships file available throughout the class
 		$this->findstyles(); // Makes the style parameters from the styles XML file available throughout the class
 		$anchor = array();
@@ -2161,7 +2944,15 @@ class WordPHP
 			echo mb_convert_encoding($text, $this->encoding);
 			echo "</div>";
 		}
-		return mb_convert_encoding($text, $this->encoding); // Out put the generated HTML text of the DOCX document
+		if ($this->Maths == 'Y'){ // add in the Mathjax script if required
+			$Mtext = "<script>\n MathJax = {  loader: {load: ['[tex]/mathtools']},\n tex: {packages: {'[+]': ['mathtools']}}, };\n </script>\n <script type=\"text/javascript\" id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\">\n </script>\n";
+			$text = $Mtext."\n".$text;
+		}
+		if ($this->Hcss == 'Y'){
+			$Htext = "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n <LINK REL=\"STYLESHEET\" TYPE=\"text/css\" HREF=\"/word-htm.css?id=<?= time() ?>\" media=\"screen\">\n </head>\n\n <body>\n ";
+			$text = $Htext.$text."\n </body>\n";
+		}
+		return mb_convert_encoding($text, $this->encoding); // Output the generated HTML text of the DOCX document
 	}
 }
 
