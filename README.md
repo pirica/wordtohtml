@@ -44,7 +44,7 @@ FEATURES
 
 require_once('wordphp.php');
 
-$rt = new WordPHP(false, 'UTF-8');
+$rt = new WordPHP(false);
 
 $text = $rt->readDocument('FILENAME','N');
 
@@ -77,13 +77,13 @@ $rt = new WordPHP(false); or $rt = new WordPHP();
 ## Set output encoding (Default is UTF-8)
 You can alter the encoding of the resultant HTML - eg. 'ISO-8859-1', 'windows-1252', etc. Although note that many special chacters and symbols may not then display correctly so UTF-8 should be used whenever practical.
 ```
-$rt = new WordPHP(false, 'UTF-8');
+$rt = new WordPHP(false, 'ISO-8859-1');
 ```
 
 ## Change directory for images (Default is 'images')
 Will change the directory used for any images in the document.
 ```
-$rt = new WordPHP(false, 'UTF-8', 'dir_name');
+$rt = new WordPHP(false, null, 'dir_name');
 ```
 
 ## Read docx file and return the html code - Default mode
@@ -116,11 +116,17 @@ N.B if you wish to use this option in conjunction with option 1a then the CSS fi
 $text = $rt->readDocument('FILENAME','NNY');
 ```
 
-## Display the html code
+## Display the html code on screen
 ```
 echo $text;
 ```
 
+##  Save the html code to a file
+```
+$myfile = fopen("newfile.php", "w") or die("Unable to open file!");
+```
+fwrite($myfile, $text)
+```
 
 ## UPDATE NOTES
 
