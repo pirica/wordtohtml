@@ -2,7 +2,7 @@
 
 ## DESCRIPTION
 
-This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. It now also will display any Mathematical Equations in it. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
+This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. It now will also display any Mathematical Equations in the document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
 
 For update notes detailing changes up to the latest version of 2.1.11 see below.
 
@@ -30,17 +30,19 @@ FEATURES
 
  9. As many Word documents are quite long a link is provided to jump back to the top of the document. Located at the middle of the right side of the screen.
 
- 10. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired. There is also an option to omit images from the resultant HTML
+ 10. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired. There is also an option to omit images from the resultant HTML if this is desired.
 
  11. Will now recognise when images are cropped and display the correct cropped image.
 
  12. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
 
- 13. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in Unicode so these are used instead. Available when using php 7.2 and above. Please note that not all browsers can display the full Unicode character set.
+ 13. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in the Unicode character set so these are used instead. Available when using php 7.2 and above. Please note that not all browsers can display the full Unicode character set.
 
- 14. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax. Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also The Double Square Bracket is not, so any occurences of this are replaced by the Double Pipe.
+ 14. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax (so internet acces is required for this). Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also The Double Square Bracket is not supported, so any occurences of this are replaced by the Double Pipe.
 
-If anyone has finds any problems or has sugestions for enhancements, please contact me on timothy.edwards1@btinternet.com 
+ 15. The resultant html code is designed to be used either as is, or (after saving) included in another html file. However an option is provided to add a html header, so that after saving it can be used as a standalone file (along with any images that it contains).
+
+If anyone finds any problems or has sugestions for enhancements, please contact me on timothy.edwards1@btinternet.com 
 
 # BASIC USAGE
 
@@ -77,7 +79,7 @@ $rt = new WordPHP(false); or $rt = new WordPHP();
 ```
 
 ## Set output encoding (Default is UTF-8)
-You can alter the encoding of the resultant HTML - eg. 'ISO-8859-1', 'windows-1252', etc. Although note that many special chacters and symbols may not then display correctly so UTF-8 should be used whenever practical.
+You can alter the encoding of the resultant HTML - eg. 'ISO-8859-1', 'windows-1252', etc. Although note that many special chacters and symbols may not then display correctly so 'UTF-8' should be used whenever practical.
 ```
 $rt = new WordPHP(false, 'ISO-8859-1');
 ```
@@ -102,7 +104,7 @@ $text = $rt->readDocument('FILENAME','Y');
 ## Read docx file and return the html code - Option 1b
 Images will be omitted
 ```
-$text = $rt->readDocument('FILENAME','Y');
+$text = $rt->readDocument('FILENAME','O');
 ```
 
 ## Read docx file and return the html code - Option 2
@@ -123,7 +125,7 @@ $text = $rt->readDocument('FILENAME','NNY');
 echo $text;
 ```
 
-##  Save the html code to a file
+##  Save the html code to a file (if required)
 ```
 $myfile = fopen("newfile.php", "w") or die("Unable to open file!");
 ```
@@ -132,11 +134,11 @@ fwrite($myfile, $text)
 
 ## UPDATE NOTES
 
-Version 2.1.11 - Enhancements and bug fixes - It will now recognise and display Mathematical Equations (using Mathjax). Also clears a bug in listing/paragraph numbering and a bug with merged cells in tables.
+Version 2.1.11 - Enhancements and bug fixes - It will now recognise and display Mathematical Equations (using Mathjax). Also clears a bug in list/paragraph numbering and a bug with merged cells in tables. An option is now provided to omit any images from the resultant html code if this is required. Also an option to include a html header to the resultant code is provided for when the html code is saved and used as a standalone file.
 
-Version 2.1.10 - It will now recognise when images are cropped and display the correct cropped image. Previously is displayed the full original image.
+Version 2.1.10 - It will now recognise when images are cropped and display the correct cropped image. Previously it displayed the full original image.
 
-Version 2.1.9 - Enhancement - It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats) when using php 7.2 and above. These character sets are in the main are not commonly available on the web/browsers. However most of the characters or equivalents are available in Unicode so these are used instead. Bug fixes:- 1. If the first few characters in a paragraph were bold and/or underlined, then the whole paragraph was. 2. If a blank line contained a single space, then the blank line was ignored.
+Version 2.1.9 - Enhancement - It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats) when using php 7.2 and above. These character sets in the main are not commonly available on the web/browsers. However most of the characters or equivalents are available in Unicode so these are used instead. Bug fixes:- 1. If the first few characters in a paragraph were bold and/or underlined, then the whole paragraph was. 2. If a blank line contained a single space, then the blank line was ignored.
 
 Version 2.1.8 - Various enhancements and bug fixes. 1. Will now recognise multiple spaces, - 2. Will recognise pdf images. - 3. Will now tell you if the .docx file cannot be found. - 4. Will now recognise checkboxes. - 5. Will now recognise most common list bullets (assuming that UTF-8 is used). - 6. Multiple bugfixes (Table widths and alignments not always correct - Top and bottom margins of text not always displayed correctly - Several other minor fixes).
 
