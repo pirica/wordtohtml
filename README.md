@@ -128,7 +128,7 @@ echo $text;
 ##  Save the html code to a file (if required)
 ```
 $myfile = fopen("newfile.php", "w") or die("Unable to open file!");
-```
+
 fwrite($myfile, $text)
 ```
 
