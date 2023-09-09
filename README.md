@@ -48,6 +48,8 @@ $rt = new WordPHP(false, 'UTF-8');
 
 $text = $rt->readDocument('FILENAME','N');
 
+echo $text;
+
 # DETAILED USAGE
 
 ## Increase php memory limit - 
@@ -113,6 +115,12 @@ N.B if you wish to use this option in conjunction with option 1a then the CSS fi
 ```
 $text = $rt->readDocument('FILENAME','NNY');
 ```
+
+## Display the html code
+```
+echo $text;
+```
+
 
 ## UPDATE NOTES
 
