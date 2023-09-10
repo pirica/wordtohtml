@@ -1588,7 +1588,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 	private function getParagraph(&$paragraph,$Tstyle)
 	{
 		$zst = array();
-		$text = $BookMk = $BookRet = $Pstyle = $zst[0] = $CBdef = $CBdef = $Mpara = $MP = '';
+		$text = $BookMk = $BookRet = $Pstyle = $zst[0] = $CBdef = $CBdef = $Mpara = $MP = $Malign = '';
 		$list_format=array();
 		$zzz = $text;
 		$zstc = 1;
@@ -1711,8 +1711,10 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				}
 			} else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'm:oMathPara') {
 				$Mpara = 'Y';
+			} else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'm:jc') {
+				$Malign = $paragraph->getAttribute("m:val");
 			} else if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'm:oMath') {
-				$Melement = $this->getMaths($paragraph, $Mpara);
+				$Melement = $this->getMaths($paragraph, $Mpara, $Malign);
 				$text .= $Melement;
 				$MP = 'Y';
 				$this->Maths = 'Y';
@@ -1745,16 +1747,22 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 	 * @param String $Dcap - The type of drop capital if it exists
 	 * @return Array - The elements styling and text
 	 */
-	private function getMaths(&$xml, $Mpara)
+	private function getMaths(&$xml, $Mpara, $Malign)
 	{	
 		
-		$Mintegral = $MintSS = $MIsubL = $MIsupL = $MIsup = $MIsub = $Msub = $Msup = $Echr = $Mlimit = $Mchr = $Bchr = $MuO = $DSmaths = $MaccC = $MaccT = $MaccC = $MGC = $MGL = $Mfunc= $MFnb = $Mear = $Me = $Begch = $Endch = $MdivT = $MuON = $Limpos = '';
-		$Mroot = $Elevel = $Mden = $Mnum = $MMcol = 0;
+		$Mintegral = $MintSS = $MIsubL = $MIsupL = $MIsup = $MIsub = $Msub = $Msup = $Echr = $Mlimit = $Mchr = $Bchr = $MuO = $DSmaths = $MaccC = $MaccT = $MaccC = $MGC = $MGL = $Mfunc= $MFnb = $Mear = $Me = $Begch = $Endch = $MdivT = $MuON = $Limpos = $Mmat = $Matpos = $Mmsub = '';
+		$Mroot = $Elevel = $Mden = $Mnum = 0;
 		$MRexp = array();
 		if ($Mpara == 'Y'){
 			$Dmaths = "\[";
 		} else {
 			$Dmaths = "\(";
+		}
+		if ($Malign == 'left'){
+			$Dmaths .= "\begin{flalign}\;";
+		}
+		if ($Malign == 'right'){
+			$Dmaths .= "\begin{flalign} && ";
 		}
 		$node = trim($xml->readOuterXML());
 		$reader = new XMLReader();
@@ -1949,12 +1957,10 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 					} else {
 						$Dmaths .= $Echr." ";
 					}
-					$MMcol = 0;
 				} else {
 					$Echr = ")";
 					$Dmaths .= "\\right";
 					$Dmaths .= $Echr." ";
-					$MMcol = 0;
 				}
 				$Bchr = '';
 			}
@@ -2199,8 +2205,8 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:limUpp' OR ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:limLow')) {
 				$MGL = '';
 			}
-			if ($Me == 'Y' OR $Me == '2') {
-				if (($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:e') AND $Mear =='' AND $MMcol == 0 AND $Bchr <> '') {
+			if (($Me == 'Y' OR $Me == '2') AND $Mmat == '') {
+				if (($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:e') AND $Mear =='' AND $Bchr <> '') {
 					$Dmaths .= " | ";
 					$Me = '';
 				}
@@ -2228,6 +2234,12 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 					$Mlimit = '';
 					$Limpos = '';
 				}
+				if ($Mmat == 'Y' AND $Mmsub == ''){
+					if ($Matpos == 'E'){
+						$Dmaths .= " & ";
+					}
+					$Matpos = 'E';
+				}
 			}
 			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:e') {
 				if (isset($MRexp[$Elevel])){
@@ -2241,6 +2253,12 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				}
 				--$Elevel;
 				$Me = 'Y';
+			}
+			if (($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:sSub') OR ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:sSubSup') OR ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:sSup')) {
+				$Mmsub = 'Y';
+			}
+			if (($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:sSub') OR ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:sSubSup') OR ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:sSup')) {
+				$Mmsub = '';
 			}
 
 			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:type') {
@@ -2294,48 +2312,24 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				$MFnb = '';
 			}
 			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:m') { // find matrix
-				$mat = new XMLReader;
-				$mat->xml(trim($reader->readOuterXML()));
-				$Mc = 0;
+				$Mmat = 'Y';
 				$Dmaths .= "\begin{matrix}";
-				while ($mat->read()) {
-					if ($mat->name == 'm:count') { 
-						$MMcol = $mat->getAttribute("m:val");
-					}
-					if ($mat->nodeType == XMLREADER::ELEMENT && $mat->name == 'm:e') {
-						$mrt = new XMLReader;
-						$mrt->xml(trim($mat->readOuterXML()));
-						$Tmptext1 = '';
-						while ($mrt->read()) {
-							if ($mrt->name == 'm:t') { 
-								$Tmptext1 .= htmlentities($mrt->expand()->textContent);
-							}
-						}
-						$DSmaths = preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
-						if ($DSmaths == ''){
-							$DSmaths = ' ';
-						}
-						$Dmaths .= $DSmaths;
-						if ($Mc <> $MMcol - 1){
-							$Dmaths .= " & ";
-						} else {
-							$Dmaths .= "\\\ ";
-						}
-						++$Mc;
-						if ($Mc == $MMcol){
-							$Mc = 0;
-						}
-					}
-				}
-				$Dmaths .= " \\end{matrix}";
 			}
 			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:m') { // find end of matrix
-				if ($Bchr == ''){
-					$MMcol = 0;
+				$Dmaths .= " \\end{matrix}";
+				$Mmat = '';
+				$Matpos = '';
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'm:mr') { // find start of matrix row
+				if ($Matpos == 'R'){
+					$Dmaths .= "\\\ ";
 				}
 			}
+			if ($reader->nodeType <> XMLREADER::ELEMENT && $reader->name == 'm:mr') { // find end of matrix row
+				$Matpos = 'R';
+			}
 
-			if ($Mroot == 0 AND $Mlimit == '' AND $MaccC == '' AND $MGC == '' AND $MGL == '' AND $MMcol == 0){
+			if ($Mroot == 0 AND $Mlimit == '' AND $MaccC == '' AND $MGC == '' AND $MGL == ''){
 				if ($reader->name == 'm:t') { //get maths text 
 					$Tmptext1 = htmlentities($reader->expand()->textContent);
 					$MItext = preg_replace('~(?<=\s)\s~', '\;', $Tmptext1);
@@ -2388,6 +2382,12 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				}
 			}
 
+		}
+		if ($Malign == 'left'){
+			$Dmaths .= " && \\end{flalign}";
+		}
+		if ($Malign == 'right'){
+			$Dmaths .= "\;\\end{flalign}";
 		}
 		if ($Mpara == 'Y'){
 			$Dmaths .= "\]";
