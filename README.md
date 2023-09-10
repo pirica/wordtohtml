@@ -1,10 +1,10 @@
-# This is an improved class to read a DOCX file and output it in HTML format.
+# This is an improved class to read a Microsoft Word DOCX file and output it in HTML format for the web.
 
 ## DESCRIPTION
 
-This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. It now will also display any Mathematical Equations in the document. The only significant exception is tabs as these are very difficult to replicate in HTLM due to its page width being very flexible. The resultant HTML should look very much like the original.
+This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. It will now also display any Mathematical Equations in the document either standalone or inline with normal text. The only significant exception is tabs as these are very difficult to replicate in HTLM due to a web page page width being very flexible and difference sizes of screens. The resultant HTML should look very much like the original.
 
-For update notes detailing changes up to the latest version of 2.1.11 see below.
+For update notes detailing changes up to the latest version of 2.1.12 see below.
 
 NOTE - Needs at least php 5 and will run on up to (at least) php 8.1.
 
@@ -131,6 +131,8 @@ fwrite($myfile, $text)
 ```
 
 ## UPDATE NOTES
+
+Version 2.1.12 - Elements with subscripts etc. are now allowed in matrices. Also standalone mathematical equations can now be left or right aligned to the page or element (eg table cell) as per the Word document instead of always in the centre.
 
 Version 2.1.11 - Enhancements and bug fixes - It will now recognise and display Mathematical Equations (using Mathjax). Also clears a bug in list/paragraph numbering and a bug with merged cells in tables. An option is now provided to omit any images from the resultant html code if this is required. Also an option to include a html header to the resultant code is provided for when the html code is saved and used as a standalone file.
 
