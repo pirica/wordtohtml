@@ -4,7 +4,7 @@
 
 This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. It will now also display any Mathematical Equations in the document either standalone or inline with normal text. The only significant exception is tabs as these are very difficult to replicate in HTLM due to a web page page width being very flexible and difference sizes of screens. The resultant HTML should look very much like the original.
 
-For update notes detailing changes up to the latest version of 2.1.12 see below.
+For update notes detailing changes up to the latest version of 2.1.13 see below.
 
 NOTE - Needs at least php 5 and will run on up to (at least) php 8.1.
 
@@ -14,7 +14,7 @@ FEATURES
 
  1. It will use the correct font and font size (assuming that a common font is being used).
 
- 2. Text formating - Bold, Underlining, Italic, Strikethrough, Superscript and Subscript are all replicated, along with text alignment : Left, Centre, Right, Justified. Also indented and hanging text.
+ 2. Text formating - Bold, Underlining (various styles/colours), Italic, Single & Double Strikethrough, Superscript and Subscript are all replicated, along with text alignment : Left, Centre, Right, Justified. Also indented and hanging text.
 
  3. It will display multi-level lists with the correct alpha-numeric numbering as per the original word document.
 
@@ -131,6 +131,8 @@ fwrite($myfile, $text)
 ```
 
 ## UPDATE NOTES
+
+Version 2.1.13 - It will now recognise many of the various underlining styles in Word. It will duplicate the following styles:- Single, Double, Dotted, Dashed and Wavy together with their heavy/thick versions and coloured underlining. It will also now recognise 'double strikethrough. In addition a few bugs have been cleared.
 
 Version 2.1.12 - Elements with subscripts etc. are now allowed in matrices. Also standalone mathematical equations can now be left or right aligned to the page or element (eg table cell) as per the Word document instead of always in the centre.
 
