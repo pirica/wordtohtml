@@ -379,10 +379,10 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				while ($st2->read()) {
 					if($st2->name == "w:spacing") { // Checks for paragraph spacing
 						if ($st2->getAttribute("w:before") <>''){
-							$Rstyle['Default']['Mtop'] =  "margin-top: ".round($st2->getAttribute("w:before")/$this->MTFactor)."px;";
+							$Rstyle['Default']['Mtop'] =  " margin-top: ".round($st2->getAttribute("w:before")/$this->MTFactor)."px;";
 						}
 						if ($st2->getAttribute("w:after") <>''){
-							$Rstyle['Default']['Mbot'] =  "margin-bottom: ".round($st2->getAttribute("w:after")/$this->MTFactor)."px;";
+							$Rstyle['Default']['Mbot'] =  " margin-bottom: ".round($st2->getAttribute("w:after")/$this->MTFactor)."px;";
 						}
 					}
 					if($st2->name == "w:sz") { //Default font size
@@ -620,7 +620,57 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				$Lstyle['Bold'] = "font-weight: bold;";
 			}
 			if($reader->name == "w:u") {
-				$Lstyle['Under'] = "text-decoration: underline;";
+				$TH = '';
+				$Ustyle = $reader->getAttribute("w:val");
+				$Ucol = "#".$reader->getAttribute("w:color");
+				if ($Ustyle == 'single'){
+					$US = 'solid';
+				} else if ($Ustyle == 'double'){
+					$US = 'double';
+				} else if ($Ustyle == 'dotted'){
+					$US = 'dotted';
+				} else if ($Ustyle == 'dottedHeavy'){
+					$US = 'dotted';
+					$TH = ' text-decoration-thickness: 4px; ';
+				} else if ($Ustyle == 'dash'){
+					$US = 'dashed';
+				} else if ($Ustyle == 'dashedHeavy'){
+					$US = 'dashed';
+					$TH = ' text-decoration-thickness: 4px; ';
+				} else if ($Ustyle == 'dashLong'){
+					$US = 'dashed';
+				} else if ($Ustyle == 'dashLongHeavy'){
+					$US = 'dashed';
+					$TH = ' text-decoration-thickness: 4px; ';
+				} else if ($Ustyle == 'dotDash'){
+					$US = 'dashed';
+				} else if ($Ustyle == 'dashDotHeavy'){
+					$US = 'dashed';
+					$TH = ' text-decoration-thickness: 4px; ';
+				} else if ($Ustyle == 'dotDotDash'){
+					$US = 'dotted';
+				} else if ($Ustyle == 'dashDotDotHeavy'){
+					$US = 'dotted';
+					$TH = ' text-decoration-thickness: 4px; ';
+				} else if ($Ustyle == 'wave'){
+					$US = 'wavy';
+				} else if ($Ustyle == 'wavyHeavy'){
+					$US = 'wavy';
+					$TH = ' text-decoration-thickness: 4px; ';
+				} else if ($Ustyle == 'wavyDouble'){
+					$US = 'wavy';
+					$TH = ' text-decoration-thickness: 4px; ';
+				} else if ($Ustyle == 'thick'){
+					$TH = ' text-decoration-thickness: 4px; ';
+				} else {
+					$US = 'solid';
+				}
+			
+				if ($Ucol == '#'){
+					$Lstyle['Under'] = "text-decoration: underline; text-decoration-style: ".$US.";".$TH;
+				} else {
+					$Lstyle['Under'] = "text-decoration: underline; text-decoration-style: ".$US."; text-decoration-color: ".$Ucol.";".$TH;
+				}
 			}
 			if($reader->name == "w:i") {
 				$Lstyle['Italic'] = " font-style: italic;";
@@ -658,6 +708,9 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 			}
 			if($reader->name == "w:strike") {
 				$f .=" text-decoration:line-through;";
+			}
+			if($reader->name == "w:dstrike") {
+				$f .=" text-decoration:line-through; text-decoration-style: double;";
 			}
 			if($reader->name == "w:vertAlign" && $reader->getAttribute("w:val") == "superscript") {
 				$f .="position: relative; top: -0.6em;";
@@ -1215,14 +1268,14 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				} else if (isset($this->Rstyle['TableNormal']['MPtop'])){ 
 					$bmar =  ";".$this->Rstyle['TableNormal']['MPtop'];
 				} else if (isset($this->Rstyle['Default']['Mtop'])){
-					$bmar =  " margin-top".$this->Rstyle['Default']['Mtop'];
+					$bmar =  $this->Rstyle['Default']['Mtop'];
 				} else {
 					$bmar =  " margin-top:0px;";
 				}	
 			}
 			if ($amar == ''){ // set margin-bottom
 				if (isset($this->Rstyle['Row']['MRbot'])){
-					$bmar =  " margin-bottom".$this->Rstyle['Row']['MRbot'];
+					$amar =  " margin-bottom".$this->Rstyle['Row']['MRbot'];
 				} elseif (isset($this->Rstyle[$Pstyle]['MPbot'])){
 					$amar =  $this->Rstyle[$Pstyle]['MPbot'];
 				} else if (isset($this->Rstyle[$Tstyle]['MPbot'])){
@@ -1230,7 +1283,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				} else if (isset($this->Rstyle['TableNormal']['MPbot'])){
 					$amar =  $this->Rstyle['TableNormal']['MPbot'];
 				} else if (isset($this->Rstyle['Default']['Mbot'])){
-					$amar =  " margin-bottom".$this->Rstyle['Default']['Mbot'];
+					$amar =  $this->Rstyle['Default']['Mbot'];
 				} else {
 					$amar =  " margin-bottom:0px;";
 				}
@@ -1608,7 +1661,9 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				if (!isset($list_format['Dcap'])){
 					$list_format['Dcap'] = '';
 				}
+				$Pelement = array();
 				$Pelement = $this->checkFormating($paragraph,$list_format['style'],$list_format['Dcap']); //check if this element is a page break and if so ignore this element
+				$tt = 'N';
 				if (!isset($Pelement['Pbreak'])){
 					if ($Pformat == 'Y'){
 						if ($list_format['Pform'] <> ''){
@@ -1618,6 +1673,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 						}
 						if(isset($list_format['listnum'])){
 							$text .= $Pelement['style'].$list_format['Lnum']."</style>";
+							$tt = 'Y';
 						}
 						$Pformat = 'D';
 					}
@@ -1629,8 +1685,8 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 					if ($zst[$zstc] != $zst[$zstc-1]){
 						if ($zstc > 1){
 							$text .= "</span>".$Pelement['style'];
-						} else if (isset($Pelement['text'])){
-//							$text .= $Pelement['style'];
+						} else if (isset($Pelement['text']) AND $tt <> 'Y'){
+							$text .= "  ".$Pelement['style'];
 						}
 						$zstc++;
 					}
@@ -1673,6 +1729,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 						$text .= "<p".$Dstyle['Pform'].">";
 					}
 					if($list_format['listnum']){
+						$Pelement = array();
 						$Pelement = $this->checkFormating($paragraph,$list_format['style'],$list_format['Dcap']); // Get inline style for list numbering
 						$text .= $Pelement['style'].$list_format['Lnum']."</style>";
 					}
