@@ -4,7 +4,7 @@
 
 This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. It will now also display any Mathematical Equations in the document either standalone or inline with normal text. The only significant exception is tabs as these are very difficult to replicate in HTLM due to a web page page width being very flexible and difference sizes of screens. The resultant HTML should look very much like the original.
 
-For update notes detailing changes up to the latest version of 2.1.13 see below.
+For update notes detailing changes up to the latest version of 2.1.14 see below.
 
 NOTE - Needs at least php 5 and will run on up to (at least) php 8.1.
 
@@ -14,33 +14,46 @@ FEATURES
 
  1. It will use the correct font and font size (assuming that a common font is being used).
 
- 2. Text formating - Bold, Underlining (various styles/colours), Italic, Single & Double Strikethrough, Superscript and Subscript are all replicated, along with text alignment : Left, Centre, Right, Justified. Also indented and hanging text.
+ 2. Text formating - Bold, Underlining (various styles/colours), Italic, Single & Double Strikethrough, Superscript and Subscript are all replicated, along with text alignment : Left, Centre, Right, Justified. Also indented and hanging text
 
- 3. It will display multi-level lists with the correct alpha-numeric numbering as per the original word document.
+ 3. It will recognise and display horizontal lines across the page - dotted, dashed, double and thicker single lines.
 
- 4. It will now recognise paragraphs numbered with the Word paragraph numbering function as well as the list numbering function.
+ 4. It will display multi-level lists with the correct alpha-numeric numbering as per the original word document.
 
- 5. It will display tables with merged cells correctly along with border and cell colours etc.
+ 5. It will now recognise paragraphs numbered with the Word paragraph numbering function as well as the list numbering function.
 
- 6. In the default mode, tables are replicated as near as possible to the original DOCX word document formatting and size. However an option is provided for the tables to take up 100% of screen width (to allow for better display in mobile devices etc.).
+ 6. It will display tables with merged cells correctly along with border and cell colours etc. 
 
- 7. Both footnote and endnote references are located in the correct place in the text. All the actual footnotes and endnotes are located at the end of the text. Links are provided to jump from a reference to actual note and then back again.
+ 7. In the default mode, tables are replicated as near as possible to the original DOCX word document formatting and size. However an option is provided for the tables to take up 100% of screen width (to allow for better display in mobile devices etc.). A '<div>' is placed around all tables with the class name of 'tab'. Allows external common CCS formatting if required.
 
- 8. The bookmarks in a 'Table of Contents' or similar provide a link to the correct section of the document as per the original Word document. A return link is also provided.
+ 8. Both footnote and endnote references are located in the correct place in the text. All the actual footnotes and endnotes are located at the end of the text. Links are provided to jump from a reference to actual note and then back again.
 
- 9. As many Word documents are quite long a link is provided to jump back to the top of the document. Located at the middle of the right side of the screen.
+ 9. The bookmarks in a 'Table of Contents' or similar provide a link to the correct section of the document as per the original Word document. A return link is also provided.
 
- 10. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired. There is also an option to omit images from the resultant HTML if this is desired.
+ 10. Href hyperlink targets follow what is set in Word - enables one to select whether to open a link in the same tab/window, or a new one.
 
- 11. Will now recognise when images are cropped and display the correct cropped image.
+ 11. As many Word documents are quite long a link is provided to jump back to the top of the document. Located at the middle of the right side of the screen.
 
- 12. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
+ 12. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired. There is also an option to omit images from the resultant HTML if this is desired.
 
- 13. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in the Unicode character set so these are used instead. Available when using php 7.2 and above. Please note that not all browsers can display the full Unicode character set.
+ 13. Will now recognise when images are cropped and display the correct cropped image. Will also recognise when images have been rotated (0-360deg) or flipped in Word and display the image correctly.
 
- 14. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax (so internet acces is required for this). Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also The Double Square Bracket is not supported, so any occurences of this are replaced by the Double Pipe.
+ 14. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
 
- 15. The resultant html code is designed to be used either as is, or (after saving) included in another html file. However an option is provided to add a html header, so that after saving it can be used as a standalone file (along with any images that it contains).
+ 15. The browser is now prevented from using cached images. Avoids caching using old images instead of the new ones when updating the images in a Word document.
+
+ 16. Text boxes are recognised along with any rotation they may have. Note 180deg rotation is the only practical method of having upside-down text in Word. I have tried to replicate approximately, whether they are near the left, centre or right of the page. Note that due to a combination of how Word puts them in the DOCX file and the vagaries of trying to accurately position things in html, the position of these text boxes is only approximate, unless they are constrained in a table cell.
+
+ 17. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in the Unicode character set so these are used instead. Available when using php 7.2 and above. Please note that not all browsers can display the full Unicode character set.
+
+ 18. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax (so internet acces is required for this). Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also The Double Square Bracket is not supported, so any occurences of this are replaced by the Double Pipe.
+
+ 19. It will now also display headers and footers. The default is to show them - when there is more than one set of headers and footers in the document it shows:-
+	a) Second page onwards when the first page is different.
+	b) Odd numbered pages when the document has different ones for odd and even pages.
+	You can select whether to show the default headers/footers, or one of the others if there is more than one. You can also opt not to display them.
+
+ 20. The resultant html code is designed to be used either as is, or (after saving) included in another html file. However an option is provided to add a html header, so that after saving it can be used as a standalone file (along with any images that it contains).
 
 If anyone finds any problems or has sugestions for enhancements, please contact me on timothy.edwards1@btinternet.com 
 
