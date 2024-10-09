@@ -131,6 +131,12 @@ N.B if you wish to use this option in conjunction with option 1a then the CSS fi
 $text = $rt->readDocument('FILENAME','NNY');
 ```
 
+## Read docx file and return the html code - Option 4a
+Display the headers and footers (or default if more than one)
+```
+$text = $rt->readDocument('FILENAME','N');  OR $text = $rt->readDocument('FILENAME','NNND');
+```
+
 ## Display the html code on screen
 ```
 echo $text;
@@ -144,6 +150,8 @@ fwrite($myfile, $text)
 ```
 
 ## UPDATE NOTES
+
+Version 2.1.14 - It will now display horizontal lines correctly. A DIV has been placed around tables. Hyperlinks now follow what is set in Word. Prevented caching of images. It will recognise images that have been rotated or flipped in Word and display them. It will now recognise Text Boxes and any rotation they may have. Headers and Footers are also now included. PNG images can now have transparent backgrounds.
 
 Version 2.1.13 - It will now recognise many of the various underlining styles in Word. It will duplicate the following styles:- Single, Double, Dotted, Dashed and Wavy together with their heavy/thick versions and coloured underlining. It will also now recognise 'double strikethrough. In addition a few bugs have been cleared.
 
