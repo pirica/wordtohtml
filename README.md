@@ -102,9 +102,24 @@ $rt = new WordPHP(false, null, 'dir_name');
 ```
 
 ## Read docx file and return the html code - Default mode
+See below for various options
 ```
 $text = $rt->readDocument('FILENAME','N');
 ```
+
+## Display the html code on screen
+```
+echo $text;
+```
+
+##  Save the html code to a file (if required)
+```
+$myfile = fopen("newfile.php", "w") or die("Unable to open file!");
+
+fwrite($myfile, $text)
+```
+
+# OPTIONS
 
 ## Read docx file and return the html code - Option 1a
 Images can be formatted using external CSS
@@ -132,21 +147,27 @@ $text = $rt->readDocument('FILENAME','NNY');
 ```
 
 ## Read docx file and return the html code - Option 4a
-Display the headers and footers (or default if more than one)
+Display the headers and footers (or default ones if more than one)
 ```
 $text = $rt->readDocument('FILENAME','N');  OR $text = $rt->readDocument('FILENAME','NNND');
 ```
 
-## Display the html code on screen
+## Read docx file and return the html code - Option 4b
+Display the headers and footers from page 1 (where different to rest of dccument)
 ```
-echo $text;
+$text = $rt->readDocument('FILENAME','NNNF');
 ```
 
-##  Save the html code to a file (if required)
+## Read docx file and return the html code - Option 4c
+Display the headers and footers from even pages (where odd and even pages are different)
 ```
-$myfile = fopen("newfile.php", "w") or die("Unable to open file!");
+$text = $rt->readDocument('FILENAME','NNNF');
+```
 
-fwrite($myfile, $text)
+## Read docx file and return the html code - Option 4d
+Do NOT display the headers and footers
+```
+$text = $rt->readDocument('FILENAME','NNNN');
 ```
 
 ## UPDATE NOTES
