@@ -2,7 +2,7 @@
 
 ## DESCRIPTION
 
-This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images etc. in the original Word DOCX document. It will now also display any Mathematical Equations in the document either standalone or inline with normal text. The only significant exception is tabs as these are very difficult to replicate in HTLM due to a web page page width being very flexible and difference sizes of screens. The resultant HTML should look very much like the original.
+This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images, tables etc. in the original Word DOCX document. It will now also display any Mathematical Equations in the document either standalone or inline with normal text. The only significant exception is Wordart and tabs. Tabs are very difficult to replicate in HTLM due to a web page page width being very flexible and different sizes of screens. The resultant HTML should look very much like the original.
 
 For update notes detailing changes up to the latest version of 2.1.14 see below.
 
@@ -24,7 +24,7 @@ FEATURES
 
  6. It will display tables with merged cells correctly along with border and cell colours etc. 
 
- 7. In the default mode, tables are replicated as near as possible to the original DOCX word document formatting and size. However an option is provided for the tables to take up 100% of screen width (to allow for better display in mobile devices etc.). A '<div>' is placed around all tables with the class name of 'tab'. Allows external common CCS formatting if required.
+ 7. In the default mode, tables are replicated as near as possible to the original DOCX word document formatting and relative size. E.g. if a table takes half the width of the pages then it will take up half the width of the screen. They will also be left, centre or right aligned as per Word. Also allows for text to be parallel with a table - either left or right side. However an option is provided for the tables to take up 100% of screen width (to allow for better display in mobile devices etc.). A '<div>' is also placed around all tables with the class name of 'tab' to allow for external common CCS formatting if required.
 
  8. Both footnote and endnote references are located in the correct place in the text. All the actual footnotes and endnotes are located at the end of the text. Links are provided to jump from a reference to actual note and then back again.
 
@@ -46,7 +46,7 @@ FEATURES
 
  17. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in the Unicode character set so these are used instead. Available when using php 7.2 and above. Please note that not all browsers can display the full Unicode character set.
 
- 18. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax (so internet acces is required for this). Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also The Double Square Bracket is not supported, so any occurences of this are replaced by the Double Pipe.
+ 18. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax (so internet acces is required for this). Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also the Double Square Bracket is not supported, so any occurences of this are replaced by the Double Pipe.
 
  19. It will now also display headers and footers. The default is to show them - when there is more than one set of headers and footers in the document it shows:-
 	a) Second page onwards when the first page is different.
