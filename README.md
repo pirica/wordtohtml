@@ -2,7 +2,7 @@
 
 ## DESCRIPTION
 
-This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images, tables etc. in the original Word DOCX document. It will now also display any Mathematical Equations in the document either standalone or inline with normal text. The only significant exception is Wordart and tabs. Tabs are very difficult to replicate in HTLM due to a web page page width being very flexible and different sizes of screens. The resultant HTML should look very much like the original.
+This improved Microsoft Word DOCX to HTML class will recognise nearly all the formatting, themes, images, tables, text-boxes etc. in the original Word DOCX document. It will now also display any Mathematical Equations in the document either standalone or inline with normal text. The only significant exception is Wordart and tabs. Tabs are very difficult to replicate in HTLM due to a web page page width being very flexible and different sizes of screens. The resultant HTML should look very much like the original.
 
 For update notes detailing changes up to the latest version of 2.1.14 see below.
 
