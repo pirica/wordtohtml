@@ -9,7 +9,7 @@ MathJax = {
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
 </script>
 <?php
-class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
+class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 {
 	private $debug = false;
 	private $file;
@@ -24,6 +24,10 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 	private $FSFactor = 22; //Font size conversion factor
 	private $MTFactor = 13; //Margin and table width conversion factor
 	private $Maths;
+	private $Pagewidth; //Page width of sections - used for using correct width in defining position of text boxes
+	private $EffPwidth; //Effective page width (after removing margins) - used for table width calcs.
+	private $snt = 0;  //Section counter - used for using correct width in defining position of text boxes
+	private $snti = 'N';   // find page size definition - used for using correct width in defining position of text boxes
 	
 	/**
 	 * CONSTRUCTOR
@@ -105,6 +109,24 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 			echo $this->rels_xml->saveXML();
 			echo "</textarea>";
 		}
+		
+		$reader1 = new XMLReader();
+		$reader1->XML($this->doc_xml->saveXML());
+		$sn = 0;
+		while ($reader1->read()) {
+		// look for required page details
+			if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:pgSz') { //Get page width
+				$this->Pagewidth[$sn] = $reader1->getAttribute("w:w");
+			}
+			if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:pgMar') { //Get page width
+				$Lmar = $reader1->getAttribute("w:left");
+				$Rmar = $reader1->getAttribute("w:right");
+				$this->Marwidth[$sn] = $Lmar + $Rmar;
+				$this->EffPwidth[$sn] = $this->Pagewidth[$sn] - $this->Marwidth[$sn];
+				++$sn;
+			}
+		}
+
 	}
 
 
@@ -166,6 +188,283 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		}
 		return $Mfont;
 	}
+
+
+	/**
+	 * Looks up the headers XML file and returns the headers if any exist
+	 * 
+	 * @param - None
+	 * @returns String - The footnote number and associated text
+	 */
+	private function headers($Hfoot)
+	{
+		$Htext = array();
+		$zip = new ZipArchive();
+		$_xml_head1 = 'word/header1.xml';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word header1 file
+			if (($index = $zip->locateName($_xml_head1)) !== false) {
+				$xml_head1 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_head1)){ // if the header1.xml file exists parse it
+			$enc = mb_detect_encoding($_xml_head1);
+			$this->setXmlParts($head1_xml, $xml_head1, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/header1.xml<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $head1_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+
+		$zip = new ZipArchive();
+		$_xml_head2 = 'word/header2.xml';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word header2 file
+			if (($index = $zip->locateName($_xml_head2)) !== false) {
+				$xml_head2 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_head2)){ // if the header2.xml file exists parse it
+			$enc = mb_detect_encoding($_xml_head2);
+			$this->setXmlParts($head2_xml, $xml_head2, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/header2.xml<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $head2_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+
+		$zip = new ZipArchive();
+		$_xml_head3 = 'word/header3.xml';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word header3 file
+			if (($index = $zip->locateName($_xml_head3)) !== false) {
+				$xml_head3 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_head3)){ // if the header3.xml file exists parse it
+			$enc = mb_detect_encoding($_xml_head3);
+			$this->setXmlParts($head3_xml, $xml_head3, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/header3.xml<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $head3_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+		
+		$reader1 = new XMLReader();
+		$Pelement = array();
+		$Ttext = array();
+		$h = 0;
+		$zst = array();
+		$zst[0] = '';
+		$zstc = 1;
+		if (isset($xml_head1) AND $Hfoot <> 'N'){
+			if ($Hfoot == 'F'){
+				if (isset($xml_head3)){ 
+					$reader1->XML($head3_xml->saveXML());
+				} else {
+					$reader1->XML($head1_xml->saveXML());
+				}
+			} else if ($Hfoot == 'E'){
+				$reader1->XML($head1_xml->saveXML());				
+			} else {
+				if (isset($xml_head2)){
+					$reader1->XML($head2_xml->saveXML());
+				} else {
+					$reader1->XML($head1_xml->saveXML());
+				}
+			}
+			while ($reader1->read()) {
+			// look for required style
+				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:jc') { //Get header alignment
+					$Halign = $reader1->getAttribute("w:val");
+				}
+				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:r') {
+
+					$Pelement = $this->checkFormating($reader1,'',''); // Get inline style and associated text
+					if (!isset($Pelement['style'])){
+						$Pelement['style'] = '';
+					}	
+					$zst[$zstc] = $Pelement['style'];
+					if ($zst[$zstc] != $zst[$zstc-1]){
+						if ($zstc > 1){
+							$Ttext[$h] .= "</span>".$Pelement['style'];
+						} else {
+							$Ttext[$h] .= $Pelement['style'];
+						}
+						$zstc++;
+					}
+					$Ttext[$h] .= $Pelement['text'];
+				}
+				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:ptab') {
+					++$h;
+					$zst = array();
+					$zst[0] = '';
+					$zstc = 1;
+				}
+				if ($reader1->nodeType == XMLREADER::END_ELEMENT && $reader1->name == 'w:p') {
+					if($h == 0){
+						if ($Halign == ''){
+							$Halign = 'left';
+						}
+						$Htext = "<table width='100%'><tr><td style = 'text-align:".$Halign.";'>".$Ttext[0]."</td></tr></table>";
+					} else {
+						$Htext = "<table width='100%'><tr><td style='text-align:left; '>".$Ttext[0]."</td> <td style='text-align:center;' >".$Ttext[1]."</td> <td style='text-align:right; '>".$Ttext[2]."</td></tr></table>";
+					}
+				}
+			}
+			return $Htext;
+		}
+	}
+
+
+
+	/**
+	 * Looks up the footers XML file and returns the footers if any exist
+	 * 
+	 * @param - None
+	 * @returns String - The footnote number and associated text
+	 */
+	private function footers($Hfoot)
+	{
+		$zip = new ZipArchive();
+		$_xml_foot1 = 'word/footer1.xml';
+		if (true === $zip->open($this->file)) {
+			//Get the footers from the word footer1 file
+			if (($index = $zip->locateName($_xml_foot1)) !== false) {
+				$xml_foot1 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		$F1text = array();
+		if (isset($xml_foot1)){ // if the footer1.xml file exists parse it
+			$enc = mb_detect_encoding($_xml_foot1);
+			$this->setXmlParts($foot1_xml, $xml_foot1, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/footer1.xml<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $foot1_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+
+		$zip = new ZipArchive();
+		$_xml_foot2 = 'word/footer2.xml';
+		if (true === $zip->open($this->file)) {
+			//Get the footers from the word footer2 file
+			if (($index = $zip->locateName($_xml_foot2)) !== false) {
+				$xml_foot2 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		$F2text = array();
+		if (isset($xml_foot2)){ // if the footer2.xml file exists parse it
+			$enc = mb_detect_encoding($_xml_foot2);
+			$this->setXmlParts($foot2_xml, $xml_foot2, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/footer2.xml<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $foot2_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+
+		$zip = new ZipArchive();
+		$_xml_foot3 = 'word/footer3.xml';
+		if (true === $zip->open($this->file)) {
+			//Get the footers from the word footer3 file
+			if (($index = $zip->locateName($_xml_foot3)) !== false) {
+				$xml_foot3 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		$F3text = array();
+		if (isset($xml_foot3)){ // if the footer1.xml file exists parse it
+			$enc = mb_detect_encoding($_xml_foot3);
+			$this->setXmlParts($foot3_xml, $xml_foot3, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/footer3.xml<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $foot3_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+		
+		$reader1 = new XMLReader();
+		$Pelement = array();
+		$Ttext = array();
+		$h = 0;
+		$zst = array();
+		$zst[0] = '';
+		$zstc = 1;
+		if (isset($xml_foot1) AND $Hfoot <> 'N'){ 
+			if ($Hfoot == 'F'){
+				if (isset($xml_foot3)){ 
+					$reader1->XML($foot3_xml->saveXML());
+				} else {
+					$reader1->XML($foot1_xml->saveXML());
+				}
+			} else if ($Hfoot == 'E'){
+				$reader1->XML($foot1_xml->saveXML());
+			} else {
+				if (isset($xml_foot2)){
+					$reader1->XML($foot2_xml->saveXML());
+				} else {
+					$reader1->XML($foot1_xml->saveXML());
+				}
+			}
+			while ($reader1->read()) {
+			// look for required style
+				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:jc') { //Get header alignment
+					$Falign = $reader1->getAttribute("w:val");
+				}
+				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:r') {
+
+					$Pelement = $this->checkFormating($reader1,'',''); // Get inline style and associated text
+					if (!isset($Pelement['style'])){
+						$Pelement['style'] = '';
+					}	
+					$zst[$zstc] = $Pelement['style'];
+					if ($zst[$zstc] != $zst[$zstc-1]){
+						if ($zstc > 1){
+							$Ttext[$h] .= "</span>".$Pelement['style'];
+						} else {
+							$Ttext[$h] .= $Pelement['style'];
+						}
+						$zstc++;
+					}
+					$Ttext[$h] .= $Pelement['text'];
+				}
+				if ($reader1->nodeType == XMLREADER::ELEMENT && $reader1->name == 'w:ptab') {
+					++$h;
+					$zst = array();
+					$zst[0] = '';
+					$zstc = 1;
+				}
+				if ($reader1->nodeType == XMLREADER::END_ELEMENT && $reader1->name == 'w:p') {
+					if($h == 0){
+						if ($Falign == ''){
+							$Falign = 'left';
+						}
+						$Ftext = "<table width='100%'><tr><td style = 'text-align:".$Falign.";'>".$Ttext[0]."</td></tr></table>";
+					} else {
+						$Ftext = "<table width='100%'><tr><td style='text-align:left; '>".$Ttext[0]."</td> <td style='text-align:center;' >".$Ttext[1]."</td> <td style='text-align:right; '>".$Ttext[2]."</td></tr></table>";
+					}
+				}
+			}
+			return $Ftext;
+		}
+	}
+
+
 
 
 	/**
@@ -585,7 +884,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		static $zimgcount = 1;
 		$Lstyle = array();
 		$Icrop = array();
-		$TT = '';
+		$TT = $ac = '';
 		$ImgL = $Wtmp = $Htmp = $Ltmp = $Imgpos = '';
 
 		$Wingding1 = array(32 => 32, 128393, 9986, 9985, 128083, 128365, 128366, 128367, 128383, 9990, 128386, 128387, 128234, 128235, 128236, 128237, 128193, 128194, 128196, 128463, 128464, 128452, 8987, 128430, 128432, 128434, 128435, 128436, 128427, 128428, 9991, 9997, 128398, 9996, 128076, 128077, 128078, 9756, 9758, 9757, 9759, 128400, 9786, 128528, 9785, 128163, 9760, 127987, 127985, 9992, 9788, 128167, 10052, 128326, 10014, 128328, 10016, 10017, 9770, 9775, 2384, 9784, 9800, 9801, 9802, 9803, 9804, 9805, 9806, 9807, 9808, 9809, 9810, 9811, 128624, 128629, 9679, 128318, 9632, 9633, 128912, 10065, 10066, 11047, 10731, 9670, 10070, 11045, 8999, 11193, 8984, 127989, 127990, 128630, 128631, 128=>9450, 9312, 9313, 9314, 9315, 9316, 9317, 9318, 9319, 9320, 9321, 9471, 10102, 10103, 10104, 10105, 10106, 10107, 10108, 10109, 10110, 10111, 128610, 128608, 128609, 128611, 128606, 128604, 128605, 128607, 183, 8226, 9642, 9898, 128902, 128904, 9673, 9678, 128319, 9642, 9723, 128962, 10022, 9733, 10038, 10036, 10041, 10037, 11216, 8982, 10209, 8977, 11217, 10026, 10032, 128336, 128337, 128338, 128339, 128340, 128341, 128342, 128343, 128344, 128345, 128346, 128347, 11184, 11185, 11186, 11187, 11188, 11189, 11190, 11191, 128618, 128619, 128597, 128596, 128599, 128598, 128592, 128593, 128594, 128595, 9003, 8998, 11160, 11162, 11161, 11163, 11144, 11146, 11145, 11147, 129128, 129130, 129129, 129131, 129132, 129133, 129135, 129134, 129144, 129146, 129145, 129147, 129148, 129149, 129151, 129150, 8678, 8680, 8679, 8681, 11012, 8691, 11008, 11009, 11011, 11010, 129196, 129197, 128502, 10004, 128503, 128505, 32);
@@ -595,288 +894,302 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		$Symbol = array(32=>32, 33, 8704, 35, 8707, 37, 38, 8717, 40, 41, 8727, 43, 44, 8722, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 8773, 913, 914, 935, 916, 917, 934, 915, 919, 921, 977, 922, 923, 924, 925, 927, 928, 920, 929, 931, 932, 933, 962, 937, 926, 936, 918, 91, 8756, 93, 8869, 95, 32, 945, 946, 967, 948, 949, 981, 947, 951, 953, 966, 954, 955, 956, 957, 959, 960, 952, 961, 963, 964, 965, 982, 969, 958, 968, 950, 123, 124, 125, 8764, 161=>978, 8242, 8804, 8260, 8734, 402, 9827, 9830, 9829, 9824, 8596, 8592, 8593, 8594, 8595, 176, 177, 8243, 8805, 180, 8733, 8706, 8226, 184, 8800, 8801, 8776, 8230, 9168, 9135, 8629, 8501, 8465, 8476, 8472, 8855, 8853, 8709, 8745, 8746, 8835, 8839, 8836, 8834, 8838, 8712, 8713, 8736, 8711, 210, 211, 8482, 8719, 8730, 8901, 216, 8743, 8744, 8660, 8656, 8657, 8658, 8659, 9674, 9001, 226, 227, 8482, 8721, 9115, 9116, 9117, 9121, 9122, 9123, 9127, 9128, 9129, 9130, 8364, 9002, 8747, 8992, 9134, 8993, 9118, 9119, 9420, 9124, 9125, 9126, 9131, 9132, 9133);
 
 		while ($reader->read()) {
-			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'w:instrText') {
-				$Htext = htmlentities($reader->expand()->textContent);
-				if (substr($Htext,0,5) == "HYPER"){
-					$Htext = substr($Htext,16);
-					$ret['Htext'] = substr($Htext,0,-6);
+			if ($reader->nodeType == XMLREADER::END_ELEMENT && $reader->name === 'w:drawing') {
+				$dr = '';
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name === 'w:drawing'){
+				$dr = 'Y';
+			}
+			if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'mc:AlternateContent') {
+				$ac = 'Y';
+			}
+			if ($reader->nodeType == XMLREADER::END_ELEMENT && $reader->name == 'mc:AlternateContent') {
+				$ac = '';
+			}
+			if ($ac == ''){
+				if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'w:instrText') {
+					$Htext = htmlentities($reader->expand()->textContent);
+					if (substr($Htext,0,5) == "HYPER"){
+						$Htext = substr($Htext,16);
+						$ret['Htext'] = substr($Htext,0,-6);
+					}
+					if (substr($Htext,0,4) == " REF"){
+						$ret['CRtext'] = substr($Htext,6,11);
+					}
 				}
-				if (substr($Htext,0,4) == " REF"){
-					$ret['CRtext'] = substr($Htext,6,11);
+				if ($reader->name === 'w:rStyle' && $reader->getAttribute("w:val") == "Hyperlink") {
+					$ret['Hyper'] = 'Y';
 				}
-			}
-			if ($reader->name === 'w:rStyle' && $reader->getAttribute("w:val") == "Hyperlink") {
-				$ret['Hyper'] = 'Y';
-			}
-			if ($reader->name === 'w:tab') {
-				$Ttmp .= "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-			}
-			if($reader->name == "w:br") { // Checks for page break
-				if ($reader->getAttribute("w:type") == 'page'){
-					$ret['Pbreak'] = 'Y';
+				if ($reader->name === 'w:tab') {
+					$Ttmp .= "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 				}
-			}
-			if($reader->name == "w:b") {
-				$Lstyle['Bold'] = "font-weight: bold;";
-			}
-			if($reader->name == "w:u") {
-				$TH = '';
-				$Ustyle = $reader->getAttribute("w:val");
-				$Ucol = "#".$reader->getAttribute("w:color");
-				if ($Ustyle == 'single'){
-					$US = 'solid';
-				} else if ($Ustyle == 'double'){
-					$US = 'double';
-				} else if ($Ustyle == 'dotted'){
-					$US = 'dotted';
-				} else if ($Ustyle == 'dottedHeavy'){
-					$US = 'dotted';
-					$TH = ' text-decoration-thickness: 4px; ';
-				} else if ($Ustyle == 'dash'){
-					$US = 'dashed';
-				} else if ($Ustyle == 'dashedHeavy'){
-					$US = 'dashed';
-					$TH = ' text-decoration-thickness: 4px; ';
-				} else if ($Ustyle == 'dashLong'){
-					$US = 'dashed';
-				} else if ($Ustyle == 'dashLongHeavy'){
-					$US = 'dashed';
-					$TH = ' text-decoration-thickness: 4px; ';
-				} else if ($Ustyle == 'dotDash'){
-					$US = 'dashed';
-				} else if ($Ustyle == 'dashDotHeavy'){
-					$US = 'dashed';
-					$TH = ' text-decoration-thickness: 4px; ';
-				} else if ($Ustyle == 'dotDotDash'){
-					$US = 'dotted';
-				} else if ($Ustyle == 'dashDotDotHeavy'){
-					$US = 'dotted';
-					$TH = ' text-decoration-thickness: 4px; ';
-				} else if ($Ustyle == 'wave'){
-					$US = 'wavy';
-				} else if ($Ustyle == 'wavyHeavy'){
-					$US = 'wavy';
-					$TH = ' text-decoration-thickness: 4px; ';
-				} else if ($Ustyle == 'wavyDouble'){
-					$US = 'wavy';
-					$TH = ' text-decoration-thickness: 4px; ';
-				} else if ($Ustyle == 'thick'){
-					$TH = ' text-decoration-thickness: 4px; ';
-				} else {
-					$US = 'solid';
+				if($reader->name == "w:br") { // Checks for page break
+					if ($reader->getAttribute("w:type") == 'page'){
+						$ret['Pbreak'] = 'Y';
+					}
 				}
-			
-				if ($Ucol == '#'){
-					$Lstyle['Under'] = "text-decoration: underline; text-decoration-style: ".$US.";".$TH;
-				} else {
-					$Lstyle['Under'] = "text-decoration: underline; text-decoration-style: ".$US."; text-decoration-color: ".$Ucol.";".$TH;
+				if($reader->name == "w:b") {
+					$Lstyle['Bold'] = "font-weight: bold;";
 				}
-			}
-			if($reader->name == "w:i") {
-				$Lstyle['Italic'] = " font-style: italic;";
-			}
-			if($reader->name == "w:color") {
-				$Lstyle['Color'] = $reader->getAttribute("w:val");
-			}
-			if($reader->name == "w:rFonts") {
-				 $FF = $reader->getAttribute("w:ascii");
-				 if ($FF == ''){
-					 $FF = 'Times New Roman';
-				 }
-				 if (substr($FF,0,9) == 'Helvetica'){
-					 $FF = 'Helvetica';
-				 } else  if ($FF == 'Wingdings' or $FF == 'ZapfDingbats'){
-					 $FF = 'Times New Roman';
-					 $Sfont = 'Wing1';
-				 } else  if ($FF == 'Wingdings 2'){
-					 $FF = 'Times New Roman';
-					 $Sfont = 'Wing2';
-				 } else  if ($FF == 'Wingdings 3'){
-					 $FF = 'Times New Roman';
-					 $Sfont = 'Wing3';
-				 } else  if ($FF == 'Webdings'){
-					 $FF = 'Times New Roman';
-					 $Sfont = 'Web';
-				 } else  if ($FF == 'Symbol'){
-					 $FF = 'Times New Roman';
-					 $Sfont = 'Sym';
-				 }
-				 $Lstyle['Font'] = "font-family: ".$FF.";";
-			}
-			if($reader->name == "w:shd" && $reader->getAttribute("w:val") != "clear") {
-				$Lstyle['background-color'] = $reader->getAttribute("w:fill");
-			}
-			if($reader->name == "w:strike") {
-				$f .=" text-decoration:line-through;";
-			}
-			if($reader->name == "w:dstrike") {
-				$f .=" text-decoration:line-through; text-decoration-style: double;";
-			}
-			if($reader->name == "w:vertAlign" && $reader->getAttribute("w:val") == "superscript") {
-				$f .="position: relative; top: -0.6em;";
-				$script = 'Y';
-			}
-			if($reader->name == "w:vertAlign" && $reader->getAttribute("w:val") == "subscript") {
-				$f .="position: relative; bottom: -0.5em;";
-				$script = 'Y';
-			}
-			if($reader->name == "w:sz") {
-				$Lstyle['FontS'] = round($reader->getAttribute("w:val")/$this->FSFactor,2);
-			}
-			if($reader->name == "w:footnoteReference") {
-				$Ftmp = $reader->getAttribute("w:id");
-				$Footref = "<a id='FN".$Ftmp."R' href='#FN".$Ftmp."'>[".$Ftmp."]</a>";
-				$f .="position: relative; top: -0.6em;font-weight: bold;";
-				$script = 'Y';
-			}
-			if($reader->name == "w:endnoteReference") {
-				$Ftmp = $reader->getAttribute("w:id");
-				$Footref = "<a id='EN".$Ftmp."R' href='#EN".$Ftmp."'>[".$this->numberToRoman($Ftmp)."]</a>";
-				$f .="position: relative; top: -0.6em;font-weight: bold;";
-				$script = 'Y';
-			}
-			
-			if ($this->Icss <> 'O'){
-				if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'w:drawing' ) { // Get a lower resolution image
-					$r = $this->checkImageFormating($reader);
-					if ($this->Icss == 'Y'){
-						$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
+				if($reader->name == "w:u") {
+					$TH = '';
+					$Ustyle = $reader->getAttribute("w:val");
+					$Ucol = "#".$reader->getAttribute("w:color");
+					if ($Ustyle == 'single'){
+						$US = 'solid';
+					} else if ($Ustyle == 'double'){
+						$US = 'double';
+					} else if ($Ustyle == 'dotted'){
+						$US = 'dotted';
+					} else if ($Ustyle == 'dottedHeavy'){
+						$US = 'dotted';
+						$TH = ' text-decoration-thickness: 4px; ';
+					} else if ($Ustyle == 'dash'){
+						$US = 'dashed';
+					} else if ($Ustyle == 'dashedHeavy'){
+						$US = 'dashed';
+						$TH = ' text-decoration-thickness: 4px; ';
+					} else if ($Ustyle == 'dashLong'){
+						$US = 'dashed';
+					} else if ($Ustyle == 'dashLongHeavy'){
+						$US = 'dashed';
+						$TH = ' text-decoration-thickness: 4px; ';
+					} else if ($Ustyle == 'dotDash'){
+						$US = 'dashed';
+					} else if ($Ustyle == 'dashDotHeavy'){
+						$US = 'dashed';
+						$TH = ' text-decoration-thickness: 4px; ';
+					} else if ($Ustyle == 'dotDotDash'){
+						$US = 'dotted';
+					} else if ($Ustyle == 'dashDotDotHeavy'){
+						$US = 'dotted';
+						$TH = ' text-decoration-thickness: 4px; ';
+					} else if ($Ustyle == 'wave'){
+						$US = 'wavy';
+					} else if ($Ustyle == 'wavyHeavy'){
+						$US = 'wavy';
+						$TH = ' text-decoration-thickness: 4px; ';
+					} else if ($Ustyle == 'wavyDouble'){
+						$US = 'wavy';
+						$TH = ' text-decoration-thickness: 4px; ';
+					} else if ($Ustyle == 'thick'){
+						$TH = ' text-decoration-thickness: 4px; ';
 					} else {
-						$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
+						$US = 'solid';
+					}
+				
+					if ($Ucol == '#'){
+						$Lstyle['Under'] = "text-decoration: underline; text-decoration-style: ".$US.";".$TH;
+					} else {
+						$Lstyle['Under'] = "text-decoration: underline; text-decoration-style: ".$US."; text-decoration-color: ".$Ucol.";".$TH;
 					}
 				}
-				if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:shape' ) { // get size of higher resolution image
-					$Psize = $reader->getAttribute("style");
-					$arr = explode(';', $Psize); // Get image size if $Psize was supplied to this function
-					$l = count($arr);
-					$d = 0;
-					while ($d < $l){
-						if (substr($arr[$d],0,5) == 'width' ) {
-							$Wtmp = substr($arr[$d],6);
-							$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
-						}
-						if (substr($arr[$d],0,6) == 'height' ) {
-							$Htmp = substr($arr[$d],7);
-							$ImgH = (float)substr($Htmp,0,-2) * 1.4;
-						}
-						if (substr($arr[$d],0,11) == 'margin-left' ) {
-							$Ltmp = substr($arr[$d],12);
-							$ImgL = substr($Ltmp,0,-2);
-						}
-						$d++;
-					}
+				if($reader->name == "w:i") {
+					$Lstyle['Italic'] = " font-style: italic;";
 				}
-				if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:imagedata') { // For high resolution images get image and cropping details if they exist
-					$relId = $reader->getAttribute("r:id");
-					$notfound = false;
-					if ($reader->getAttribute("croptop")){
-						$Ctop = substr($reader->getAttribute("croptop"),0,-1);
-						$TT = 'Y';
+				if($reader->name == "w:color") {
+					$Lstyle['Color'] = $reader->getAttribute("w:val");
+				}
+				if($reader->name == "w:rFonts") {
+					 $FF = $reader->getAttribute("w:ascii");
+					 if ($FF == ''){
+						 $FF = 'Times New Roman';
+					 }
+					 if (substr($FF,0,9) == 'Helvetica'){
+						 $FF = 'Helvetica';
+					 } else  if ($FF == 'Wingdings' or $FF == 'ZapfDingbats'){
+						 $FF = 'Times New Roman';
+						 $Sfont = 'Wing1';
+					 } else  if ($FF == 'Wingdings 2'){
+						 $FF = 'Times New Roman';
+						 $Sfont = 'Wing2';
+					 } else  if ($FF == 'Wingdings 3'){
+						 $FF = 'Times New Roman';
+						 $Sfont = 'Wing3';
+					 } else  if ($FF == 'Webdings'){
+						 $FF = 'Times New Roman';
+						 $Sfont = 'Web';
+					 } else  if ($FF == 'Symbol'){
+						 $FF = 'Times New Roman';
+						 $Sfont = 'Sym';
+					 }
+					 $Lstyle['Font'] = "font-family: ".$FF.";";
+				}
+				if($reader->name == "w:shd" && $reader->getAttribute("w:val") != "clear") {
+					$Lstyle['background-color'] = $reader->getAttribute("w:fill");
+				}
+				if($reader->name == "w:strike") {
+					$f .=" text-decoration:line-through;";
+				}
+				if($reader->name == "w:dstrike") {
+					$f .=" text-decoration:line-through; text-decoration-style: double;";
+				}
+				if($reader->name == "w:vertAlign" && $reader->getAttribute("w:val") == "superscript") {
+					$f .="position: relative; top: -0.6em;";
+					$script = 'Y';
+				}
+				if($reader->name == "w:vertAlign" && $reader->getAttribute("w:val") == "subscript") {
+					$f .="position: relative; bottom: -0.5em;";
+					$script = 'Y';
+				}
+				if($reader->name == "w:sz") {
+					$Lstyle['FontS'] = round($reader->getAttribute("w:val")/$this->FSFactor,2);
+				}
+				if($reader->name == "w:footnoteReference") {
+					$Ftmp = $reader->getAttribute("w:id");
+					$Footref = "<a id='FN".$Ftmp."R' href='#FN".$Ftmp."'>[".$Ftmp."]</a>";
+					$f .="position: relative; top: -0.6em;font-weight: bold;";
+					$script = 'Y';
+				}
+				if($reader->name == "w:endnoteReference") {
+					$Ftmp = $reader->getAttribute("w:id");
+					$Footref = "<a id='EN".$Ftmp."R' href='#EN".$Ftmp."'>[".$this->numberToRoman($Ftmp)."]</a>";
+					$f .="position: relative; top: -0.6em;font-weight: bold;";
+					$script = 'Y';
+				}
+				
+				if ($this->Icss <> 'O'){
+					if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'w:drawing' ) { // Get a lower resolution image
+						$r = $this->checkImageFormating($reader);
+						if ($this->Icss == 'Y'){
+							$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
+						} else {
+							$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
+						}
 					}
-					if ($reader->getAttribute("cropbottom")){
-						$Cbot = substr($reader->getAttribute("cropbottom"),0,-1);
-						$Cbot = 64000 - $Cbot;
-						$TT = 'Y';
+					if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:shape' ) { // get size of higher resolution image
+						$Psize = $reader->getAttribute("style");
+						$arr = explode(';', $Psize); // Get image size if $Psize was supplied to this function
+						$l = count($arr);
+						$d = 0;
+						while ($d < $l){
+							if (substr($arr[$d],0,5) == 'width' ) {
+								$Wtmp = substr($arr[$d],6);
+								$ImgW = (float)substr($Wtmp,0,-2) * 1.4;
+							}
+							if (substr($arr[$d],0,6) == 'height' ) {
+								$Htmp = substr($arr[$d],7);
+								$ImgH = (float)substr($Htmp,0,-2) * 1.4;
+							}
+							if (substr($arr[$d],0,11) == 'margin-left' ) {
+								$Ltmp = substr($arr[$d],12);
+								$ImgL = substr($Ltmp,0,-2);
+							}
+							$d++;
+						}
 					}
-					if ($reader->getAttribute("cropleft")){
-						$Cleft = substr($reader->getAttribute("cropleft"),0,-1);
-						$TT = 'Y';
-					}
-					if ($reader->getAttribute("cropright")){
-						$Cright = substr($reader->getAttribute("cropright"),0,-1);
-						$Cright = 64000 - $Cright;
-						$TT = 'Y';
-					}
-					if ($TT == 'Y'){
-						$Cwidth = $Cright - $Cleft;
-						$CwidthPC = $Cwidth / 64000;
-						$CleftPC = $Cleft /64000;
-						$Cheight = $Cbot - $Ctop;
-						$CheightPC = $Cheight / 64000;
-						$CtopPC = $Ctop /64000;
-						$Icrop['left'] = $CleftPC;
-						$Icrop['top'] = $CtopPC;
-						$Icrop['width'] = $CwidthPC;
-						$Icrop['height'] = $CheightPC;
-					}
-					if ($ImgL <> ''){
-						$Imgpos = ($ImgL < 50) ? "float:left;" : "float:right;";
-					}
-					$r['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 15px 10px 15px;'";
-					// image id found, get the image location
-					if (!$notfound && $relId) {
-						$reader = new XMLReader();
-						$reader->XML($this->rels_xml->saveXML());
-						while ($reader->read()) {
-							if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name=='Relationship') {
-								if($reader->getAttribute("Id") == $relId) {
-									$link = "word/".$reader->getAttribute('Target');
-									break;
+					if($reader->nodeType == XMLREADER::ELEMENT && $reader->name == 'v:imagedata') { // For high resolution images get image and cropping details if they exist
+						$relId = $reader->getAttribute("r:id");
+						$notfound = false;
+						if ($reader->getAttribute("croptop")){
+							$Ctop = substr($reader->getAttribute("croptop"),0,-1);
+							$TT = 'Y';
+						}
+						if ($reader->getAttribute("cropbottom")){
+							$Cbot = substr($reader->getAttribute("cropbottom"),0,-1);
+							$Cbot = 64000 - $Cbot;
+							$TT = 'Y';
+						}
+						if ($reader->getAttribute("cropleft")){
+							$Cleft = substr($reader->getAttribute("cropleft"),0,-1);
+							$TT = 'Y';
+						}
+						if ($reader->getAttribute("cropright")){
+							$Cright = substr($reader->getAttribute("cropright"),0,-1);
+							$Cright = 64000 - $Cright;
+							$TT = 'Y';
+						}
+						if ($TT == 'Y'){
+							$Cwidth = $Cright - $Cleft;
+							$CwidthPC = $Cwidth / 64000;
+							$CleftPC = $Cleft /64000;
+							$Cheight = $Cbot - $Ctop;
+							$CheightPC = $Cheight / 64000;
+							$CtopPC = $Ctop /64000;
+							$Icrop['left'] = $CleftPC;
+							$Icrop['top'] = $CtopPC;
+							$Icrop['width'] = $CwidthPC;
+							$Icrop['height'] = $CheightPC;
+						}
+						if ($ImgL <> ''){
+							$Imgpos = ($ImgL < 50) ? "float:left;" : "float:right;";
+						}
+						$r['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 15px 10px 15px;'";
+						// image id found, get the image location
+						if (!$notfound && $relId) {
+							$reader = new XMLReader();
+							$reader->XML($this->rels_xml->saveXML());
+							while ($reader->read()) {
+								if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name=='Relationship') {
+									if($reader->getAttribute("Id") == $relId) {
+										$link = "word/".$reader->getAttribute('Target');
+										break;
+									}
 								}
 							}
 						}
-					}
-				
-					$zip = new ZipArchive();
-					$im = null;
-					if (true === $zip->open($this->file)) {
-						$r['image'] = $this->createImage($zip->getFromName($link), $relId, $link, $Icrop);
-					}
-					$zip->close();
-					if ($this->Icss == 'Y'){
-						$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
-					} else {
-						$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
-					}
-				}
-			}
-			if ($reader->name == "w:t") { // Find text and also substitute any symbols found with their Unicode alternatives
-				$Tmptext1 = htmlentities($reader->expand()->textContent);
-				$Tmptext2 = preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
-				if ($Sfont <> '' AND $Tmptext1 <> ''){
-					if (substr (PHP_VERSION,0,3) >= '7.2'){
-						$tch = mb_ord($Tmptext1)-61440;
-						if ($Sfont == 'Wing1'){
-							$tch1 = $Wingding1[$tch];
-						} else if ($Sfont == 'Wing2'){
-							$tch1 = $Wingding2[$tch];
-						} else if ($Sfont == 'Wing3'){
-							$tch1 = $Wingding3[$tch];
-						} else if ($Sfont == 'Web'){
-							$tch1 = $Webdings[$tch];
-						} else if ($Sfont == 'Sym'){
-							$tch1 = $Symbol[$tch];
+					
+						$zip = new ZipArchive();
+						$im = null;
+						if (true === $zip->open($this->file)) {
+							$r['image'] = $this->createImage($zip->getFromName($link), $relId, $link, $Icrop);
 						}
-						$Tstr .= mb_chr($tch1);	
-						$Ttmp .= $Tstr;	
-					} else {
-						$Ttmp .= "&nbsp;";
+						$zip->close();
+						if ($this->Icss == 'Y'){
+							$img = $r !== null ? "<image class='Wimg".$zimgcount."' src='".$r['image']."' />" : null;
+						} else {
+							$img = $r !== null ? "<image src='".$r['image']."' ".$r['style']." />" : null;
+						}
 					}
-				} else {
-					$Ttmp .= $Tmptext2;
 				}
-			}
-			if($reader->name == "w:sym") {
-				if (substr (PHP_VERSION,0,3) >= '7.2'){
+				if ($reader->name == "w:t") { // Find text and also substitute any symbols found with their Unicode alternatives
+					$Tmptext1 = htmlentities($reader->expand()->textContent);
+					$Tmptext2 = preg_replace('~(?<=\s)\s~', '&nbsp;', $Tmptext1);
+					if ($Sfont <> '' AND $Tmptext1 <> ''){
+						if (substr (PHP_VERSION,0,3) >= '7.2'){
+							$tch = mb_ord($Tmptext1)-61440;
+							if ($Sfont == 'Wing1'){
+								$tch1 = $Wingding1[$tch];
+							} else if ($Sfont == 'Wing2'){
+								$tch1 = $Wingding2[$tch];
+							} else if ($Sfont == 'Wing3'){
+								$tch1 = $Wingding3[$tch];
+							} else if ($Sfont == 'Web'){
+								$tch1 = $Webdings[$tch];
+							} else if ($Sfont == 'Sym'){
+								$tch1 = $Symbol[$tch];
+							}
+							$Tstr .= mb_chr($tch1);	
+							$Ttmp .= $Tstr;	
+						} else {
+							$Ttmp .= "&nbsp;";
+						}
+					} else {
+						$Ttmp .= $Tmptext2;
+					}
+				}
+				if($reader->name == "w:sym") {
+					if (substr (PHP_VERSION,0,3) >= '7.2'){
 
-					$SF = $reader->getAttribute("w:font");
-					$SC = $reader->getAttribute("w:char");
-					$SCD = hexdec(substr($SC,-2,2));
-					if ($SF == 'Wingdings' or $SF == 'ZapfDingbats'){
-						$RC = $Wingding1[$SCD];
-						$Ttmp .= mb_chr($RC);
-					} else if ($SF == 'Wingdings 2'){
-						$RC = $Wingding2[$SCD];
-						$Ttmp .= mb_chr($RC);
-					} else if ($SF == 'Wingdings 3'){
-						$RC = $Wingding3[$SCD];
-						$Ttmp .= mb_chr($RC);
-					} else if ($SF == 'Webdings'){
-						$RC = $Webdings[$SCD];
-						$Ttmp .= mb_chr($RC);
-					} else if ($SF == 'Symbol'){
-						$RC = $Symbol[$SCD];
-						$Ttmp .= mb_chr($RC);
+						$SF = $reader->getAttribute("w:font");
+						$SC = $reader->getAttribute("w:char");
+						$SCD = hexdec(substr($SC,-2,2));
+						if ($SF == 'Wingdings' or $SF == 'ZapfDingbats'){
+							$RC = $Wingding1[$SCD];
+							$Ttmp .= mb_chr($RC);
+						} else if ($SF == 'Wingdings 2'){
+							$RC = $Wingding2[$SCD];
+							$Ttmp .= mb_chr($RC);
+						} else if ($SF == 'Wingdings 3'){
+							$RC = $Wingding3[$SCD];
+							$Ttmp .= mb_chr($RC);
+						} else if ($SF == 'Webdings'){
+							$RC = $Webdings[$SCD];
+							$Ttmp .= mb_chr($RC);
+						} else if ($SF == 'Symbol'){
+							$RC = $Symbol[$SCD];
+							$Ttmp .= mb_chr($RC);
+						}
 					}
 				}
 			}
@@ -1067,7 +1380,33 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 					$palign =  $this->Rstyle[$Pstyle]['Align'];
 				}
 				if($reader->name == "w:pBdr") { // Add horizontal line
-					$hr = "width:100%; height:1px; background: #000000";
+					$hr2 = new XMLReader;
+					$hr2->xml(trim($reader->readOuterXML()));
+					while ($hr2->read()) {
+						if($hr2->name == 'w:bottom') {
+							$Hnum = $hr2->getAttribute("w:val");
+							if ($Hnum == 'single' OR $Hnum == 'thinThickThinMediumGap'){
+								$Slnum = "solid;";
+							} else if ($Hnum == 'double' OR $Hnum == 'wave'){
+								$Slnum = "solid; border-bottom:1px solid; height:3px;";
+							} else if ($Hnum == 'dotted'){
+								$Slnum = "dotted;";
+							} else if ($Hnum == 'dashed'){
+								$Slnum = "dashed;";
+							}
+							$Lsz = $hr2->getAttribute("w:sz");
+							if ($Lsz == 6){
+								$Slsz = "border-top: 1px ";
+							} else if ($Lsz == 12){
+								$Slsz = "border-top: 2px ";
+							} else if ($Lsz == 18){
+								$Slsz = "border-top: 3px ";
+							} else if ($Lsz == 24){
+								$Slsz = "border-top: 4px ";
+							}
+							$hr = "<hr width=100% style='border-width:0; ".$Slsz.$Slnum."'>";
+						}
+					}
 				}
 			}
 		
@@ -1328,9 +1667,10 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				}
 			}
 			// return the paragraph styling
-			$PSret['Pform'] = " style='".$bmar.$amar.$cmar.$dmar.$aind.$bind.$cind.$dind.$palign.$bcol.$hr."'";
+			$PSret['Pform'] = " style='".$bmar.$amar.$cmar.$dmar.$aind.$bind.$cind.$dind.$palign.$bcol."'";
+			// return horizontal line
+			$PSret['hr'] = $hr;
 			return $PSret;
-		
 		$PSret['Dcap'] = '';
 		$PSret['Style'] = '';
 		$PSret['Pform'] = '';
@@ -1350,7 +1690,6 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 	private function checkImageFormating(&$xml)
 	{
 		$content = trim($xml->readInnerXml());
-
 		if (!empty($content)) {
 
 			$relId;
@@ -1358,7 +1697,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 			$reader = new XMLReader();
 			$reader->XML($content);
 			static $Icount = 1;
-			$Inline = $offset = $Imgpos = $Crop = $TT = '';
+			$Inline = $offset = $Imgpos = $Crop = $TT = $RT = $Irot = $IflipH = $IflipV = $trans = '';
 			$Pcount = $Cleft = $CleftPC = $Ctop = $CtopPC = 0;
 			$Cright = $Cbot = 100000;
 			$Icrop = array();
@@ -1415,11 +1754,87 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 						$Icrop['height'] = $CheightPC;
 					}
 				}
+				if ($reader->name == "a:xfrm") { // Check if image is rotated and/or flipped
+					if ($reader->getAttribute("rot")){
+						$Irot = $reader->getAttribute("rot")/60000;
+						$RT = 'Y';
+					}
+					if ($reader->getAttribute("flipH")){
+						$IflipH = $reader->getAttribute("flipH");
+						$RT = 'Y';
+					}
+					if ($reader->getAttribute("flipV")){
+						$IflipV = $reader->getAttribute("flipV");
+						$RT = 'Y';
+					}
+				}
+			}
+			if ($RT == 'Y'){
+				$trans = "transform:";
+				if ($Irot <> ''){
+					$trans .= " rotate(".$Irot."deg)";
+				}
+				if ($IflipH <> ''){
+					$trans .= " scaleX(-1)";
+				}
+				if ($IflipV <> ''){
+					$trans .= " scaleY(-1)";
+				}
+				$trans .= "; ";
+				// find amount of padding needed for rotated image
+				if ($Irot <> ''){
+					if($Irot == '90' OR $Irot == '270'){
+						if($ImgW > $ImgH){
+							$diff = ceil((($ImgW - $ImgH)/2) + 10);
+							$padd = "padding:".$diff."px 5px ".$diff."px 5px; ";				
+						} else if($ImgH > $ImgW){
+							$diff = ceil((($ImgW - $ImgH)/2) + 5);
+							$padd = "padding:10px ".$diff."px 10px ".$diff."px; ";				
+						} else {
+							$padd = "padding:10px 5px 10px 5px; ";
+						}
+					} else if($Irot == 180){
+						$padd = "padding:10px 5px 10px 5px; ";
+					} else {
+						if (($Irot > 0 AND $Irot <90) OR ($Irot > 180 AND $Irot <270)){
+							if ($Irot > 180){
+								$Irot = $Irot - 180;
+							}
+							$Rcot = deg2rad($Irot);
+							$Rwidth = $ImgW * cos($Rcot) + $ImgH * sin($Rcot);
+							$Rheight = $ImgW * sin($Rcot) + $ImgH * cos($Rcot);
+						} else {
+							if ($Irot > 270){
+								$Irot = $Irot - 270;
+							} else {
+								$Irot = $Irot - 90;
+							}
+							$Rcot = deg2rad($Irot);
+							$Rwidth = $ImgH * cos($Rcot) + $ImgW * sin($Rcot);
+							$Rheight = $ImgH * sin($Rcot) + $ImgW * cos($Rcot);
+						}
+						if ($Rwidth > $ImgW){
+							$Pwidth = ceil((($Rwidth - $ImgW) / 2) + 5);
+						} else {
+							$Pwidth = 5;
+						}
+						if ($Rheight > $ImgH){
+							$Pheight = ceil((($Rheight - $ImgH) / 2) + 10);
+						} else {
+							$Pwidth = 10;
+						}
+						$padd = "padding:".$Pheight."px ".$Pwidth."px ".$Pheight."px ".$Pwidth."px; ";
+					}
+				} else {
+					$padd = "padding:10px 5px 10px 5px; ";
+				}
+			} else {
+				$padd = "padding:10px 5px 10px 5px; ";
 			}
 			if ($Inline == ''){
 				$Imgpos = ($offset < 10000) ? "float:left;" : "float:right;";
 			}
-			$image['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; padding:10px 5px 10px 5px;'";
+			$image['style'] = "style='".$Imgpos."width:".$ImgW."px; height:".$ImgH."px; ".$padd.$trans."'";
 
 			// image id found, get the image location
 			if (!$notfound && $relId) {
@@ -1503,7 +1918,14 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 
 			switch ($ext) {
 				case 'png':
-					imagepng($im, $fname);
+					// Ensure alpha channel is preserved
+					imagesavealpha($im, true);
+					// Set alpha blending mode
+					imagealphablending($im, false);
+					// Output PNG with full alpha channel
+					imagepng($im, $fname, 9, PNG_ALL_FILTERS);
+//					$contentType = 'image/png';
+//					imagepng($im, $fname);
 					break;
 				case 'bmp':
 					imagebmp($im, $fname);
@@ -1522,6 +1944,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 					return null;
 			}
 			imagedestroy($im);
+			$fname = $fname."?id=".time();
 		}
 		return $fname;
 	}
@@ -1540,9 +1963,25 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		static $rels_foot = null ;
 		if($xml->hasAttributes) {
 			$attribute = "";
+			$target = "";
 			while($xml->moveToNextAttribute()) {
 				if($xml->name == "r:id"){  // check for external hyperlinks
 					$attribute = $xml->value;
+				}
+				if($xml->name == "w:tgtFrame"){  // check for target frame
+					$target = $xml->value;
+					if ($target == '_self'){
+						$tar="target='_self'";
+					}
+					if ($target == '_blank'){
+						$tar="target='_blank' rel='noopener noreferrer'";
+					}
+					if ($target == '_top'){
+						$tar="target='_top'";
+					}
+					if ($target == '_parent'){
+						$tar="target='_parent'";
+					}
 				}
 				if($xml->name == "w:anchor"){  // check for internal bookmark links
 					$internalT = $xml->value;
@@ -1618,7 +2057,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		}
 		
 		if($link != "") { // external hyperlinks
-			$ret['open'] = "<a href='".$link."' target='_blank' rel='noopener noreferrer'>";
+			$ret['open'] = "<a href='".$link."' ".$tar.">";
 			$ret['close'] = "</a>";
 		} else { // internal bookmark links
 			$ret['open'] = "<a id='R".$internal."' style='text-decoration:none;' href='#".$internal."'>";
@@ -1645,8 +2084,11 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		$list_format=array();
 		$zzz = $text;
 		$zstc = 1;
+		$ac = 'N';
 		$Pformat = 'N';
-
+		$wr = $offset = 0;
+		$dr = $TXT = $xf = $tp = $ex = $tc = $RT = $offset = $ta = $padd = $trans = '';
+		
 		$Dstyle = $this->getListFormating($paragraph,$Tstyle); //default styles for the document
 		if (!isset($Dstyle['Pform'])){
 			$Dstyle['Pform'] = '';
@@ -1654,58 +2096,206 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		// loop through paragraph dom
 		while ($paragraph->read()) {
 			// look for elements
-			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:r') {
-				if (!isset($list_format['style'])){
-					$list_format['style'] = '';
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'mc:AlternateContent') {
+				$ac = 'Y';
+			}
+			if ($paragraph->nodeType == XMLREADER::END_ELEMENT && $paragraph->name === 'mc:AlternateContent') {
+				$ac = 'N';
+				$xf = $ex = $RT = $Irot = $IflipV = $offset = $IflipH = $padd = $trans = '';
+			}
+			if ($paragraph->nodeType == XMLREADER::END_ELEMENT && $paragraph->name === 'w:r') {
+				--$wr;
+			}
+			if ($paragraph->nodeType == XMLREADER::END_ELEMENT && $paragraph->name === 'w:drawing') {  //checks of there is an image or textbox
+				$dr = '';
+				$Ttext .= "</div>";
+			}
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:drawing'){
+				$dr = 'Y';
+			}
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:p'){
+				$tp = 'Y';
+			}
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name == "wp:extent") { // Get textbox size
+				$ImgW1 = (int)$paragraph->getAttribute("cx");
+				$ImgW = round($ImgW1/9000);
+				$ImgH1 = (int)$paragraph->getAttribute("cy");
+				$ImgH = round($ImgH1/9000);
+				
+				$Ppos = round($ImgW1/2) + floatval($offset);
+				$PR1 = round($this->Pagewidth[$this->snt] * 500 / 3); //Define split point for left / centre text box
+				$PR2 = $PR1 * 2; //Define split point for centre / right text box
+				if($Ppos < $PR1){
+					$TBpos = "width:".$ImgW."px; float:left; ";
+				} else if($Ppos > $PR2){
+					$TBpos = "width:".$ImgW."px; float:right; ";
+				} else {
+					$TBpos = "width:".$ImgW."px; margin: auto; ";
 				}
-				if (!isset($list_format['Dcap'])){
-					$list_format['Dcap'] = '';
+				if ($ta == 'center'){
+					$TBpos = "width:".$ImgW."px; margin: auto; ";					
 				}
-				$Pelement = array();
-				$Pelement = $this->checkFormating($paragraph,$list_format['style'],$list_format['Dcap']); //check if this element is a page break and if so ignore this element
-				$tt = 'N';
-				if (!isset($Pelement['Pbreak'])){
-					if ($Pformat == 'Y'){
-						if ($list_format['Pform'] <> ''){
-							$text = "<p".$BookMk.$list_format['Pform'].">"; // brings in paragraph formatting
-						} else {
-							$text .= "<p".$BookMk.$Dstyle['Pform'].">";
-						}
-						if(isset($list_format['listnum'])){
-							$text .= $Pelement['style'].$list_format['Lnum']."</style>";
-							$tt = 'Y';
-						}
-						$Pformat = 'D';
+			}
+			if ($paragraph->name == "w:lastRenderedPageBreak"){
+				if ($this->snti == 'Y'){
+					++$this->snt;  // Found start of next section
+					$this->snti = 'N';		
+				}
+			} 
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name == "w:pgSz"){
+				$this->snti = 'Y';
+			} 
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name == "wp:posOffset" AND $ex == '') {
+				$offset = $paragraph->expand()->textContent;  // Checks to see where the textbox is on the page
+				$ex = 'Y';
+			}
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name == "wp:align") {
+				$ta = $paragraph->expand()->textContent;  // Checks to see if the textbox is in the centre of the page the page
+			}
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === "a:xfrm" and $xf == '') { // Check if textbox is rotated and/or flipped
+				if ($paragraph->getAttribute("rot")){
+					$Irot = $paragraph->getAttribute("rot")/60000;
+					$RT = 'Y';
+				}
+				if ($paragraph->getAttribute("flipH")){
+					$IflipH = $paragraph->getAttribute("flipH");
+					$RT = 'Y';
+				}
+				if ($paragraph->getAttribute("flipV")){
+					$IflipV = $paragraph->getAttribute("flipV");
+					$RT = 'Y';
+				}
+				$xf = 'Y';
+				if ($RT == 'Y'){
+					$trans = "transform:";
+					if ($Irot <> ''){
+						$trans .= " rotate(".$Irot."deg)";
 					}
-					if ($Pformat == 'N'){
-						$text .= "<p".$BookMk.$Dstyle['Pform'].">";
-						$Pformat = 'D';
+					if ($IflipH <> ''){
+						$trans .= " scaleX(-1)";
 					}
-					$zst[$zstc] = $Pelement['style'];
-					if ($zst[$zstc] != $zst[$zstc-1]){
-						if ($zstc > 1){
-							$text .= "</span>".$Pelement['style'];
-						} else if (isset($Pelement['text']) AND $tt <> 'Y'){
-							$text .= "  ".$Pelement['style'];
-						}
-						$zstc++;
+					if ($IflipV <> ''){
+						$trans .= " scaleY(-1)";
 					}
-					if (isset($Pelement['CRtext'])){
-						$CRlink = $Pelement['CRtext'];
-					}
-					if (isset($Pelement['text'])){
-						if (isset($CRlink)){
-							$text .= "<a id='R".$CRlink."' href='#".$CRlink."'>".$Pelement['text']."</a>";
-							$CRlink = '';
-						} else {
-							if ($Pelement['text'] == ' '){
-								$Pelement['text'] = "&nbsp;";
+					$trans .= "; ";
+					// find amount of margin needed for rotated image
+					if ($Irot <> ''){
+						if($Irot == '90' OR $Irot == '270'){
+							if($ImgW > $ImgH){
+								$diff = ceil(($ImgW - $ImgH)/2);
+								$padd = "margin:".$diff."px -".$diff."px ".$diff."px -".$diff."px; ";				
+							} else if($ImgH > $ImgW){
+								$diff = ceil(($ImgW - $ImgH)/2);
+								$padd = "margin:-".$diff."px ".$diff."px -".$diff."px ".$diff."px; ";				
 							}
-							$text .= $Pelement['text']; 
+						} else {
+							if (($Irot > 0 AND $Irot <90) OR ($Irot > 180 AND $Irot <270)){
+								if ($Irot > 180){
+									$Irot = $Irot - 180;
+								}
+								$Rcot = deg2rad($Irot);
+								$Rwidth = $ImgW * cos($Rcot) + $ImgH * sin($Rcot);
+								$Rheight = $ImgW * sin($Rcot) + $ImgH * cos($Rcot);
+							} else {
+								if ($Irot > 270){
+									$Irot = $Irot - 270;
+								} else {
+									$Irot = $Irot - 90;
+								}
+								$Rcot = deg2rad($Irot);
+								$Rwidth = $ImgH * cos($Rcot) + $ImgW * sin($Rcot);
+								$Rheight = $ImgH * sin($Rcot) + $ImgW * cos($Rcot);
+							}
+							if ($Rwidth > $ImgW){
+								$Pwidth = ceil((($Rwidth - $ImgW) / 2));
+							} else {
+								$Pwidth = - ceil((($ImgW - $Rwidth) / 2));
+							}
+							if ($Rheight > $ImgH){
+								$Pheight = ceil((($Rheight - $ImgH) / 2));
+							} else {
+								$Pheight = - ceil((($ImgH - $Rheight) / 2));
+							}
+							$padd = "margin:".$Pheight."px ".$Pwidth."px ".$Pheight."px ".$Pwidth."px; ";
 						}
 					}
 				}
-			} else if($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:pPr') { // Get list and paragraph formatting
+				$Ttext .= "<div style='".$trans.$padd.$TBpos." '>";
+			}
+			if ($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:r'){
+				++$wr;
+				if($wr == 1){
+					if (!isset($list_format['style'])){
+						$list_format['style'] = '';
+					}
+					if (!isset($list_format['Dcap'])){
+						$list_format['Dcap'] = '';
+					}
+					$Pelement = array();
+					$Pelement = $this->checkFormating($paragraph,$list_format['style'],$list_format['Dcap']); 
+					//check if this element is a page break and if so ignore this element
+					$tt = 'N';
+					if (!isset($Pelement['Pbreak'])){
+						if ($Pelement['text'] <> ''){
+							$TXT = 'Y';
+						}
+						if ($Pformat == 'Y'){
+							if ($list_format['Pform'] <> ''){
+								$text .= "<p".$BookMk.$list_format['Pform'].">"; // brings in paragraph formatting
+							} else {
+								$text .= "<p".$BookMk.$Dstyle['Pform'].">";
+							}
+							if(isset($list_format['listnum'])){
+								$text .= $Pelement['style'].$list_format['Lnum']."</style>";
+								$tt = 'Y';
+							}
+							$Pformat = 'D';
+						}
+						if ($Pformat == 'N'){
+							$text .= "<p".$BookMk.$Dstyle['Pform'].">";
+							$Pformat = 'D';
+						}
+						$zst[$zstc] = $Pelement['style'];
+						if ($zst[$zstc] != $zst[$zstc-1]){
+							if ($zstc > 1){
+								$text .= "</span>".$Pelement['style'];
+							} else if (isset($Pelement['text']) AND $tt <> 'Y'){
+								$text .= "  ".$Pelement['style'];
+							}
+							$zstc++;
+						}
+						if (isset($Pelement['CRtext'])){
+							$CRlink = $Pelement['CRtext'];
+						}
+						if (isset($Pelement['text'])){
+							if (isset($CRlink)){
+								$text .= "<a id='R".$CRlink."' href='#".$CRlink."'>".$Pelement['text']."</a>";
+								$CRlink = '';
+							} else {
+								if ($Pelement['text'] == ' '){
+									$Pelement['text'] = "&nbsp;";
+								}
+								$text .= $Pelement['text']; 
+							}
+						}
+					}
+				} else if ($dr == 'Y'){
+					$Telement = $this->checkFormating($paragraph,$list_format['style'],
+					$list_format['Dcap']);
+					if ($tp == 'Y'){
+						if ($tc == 'Y'){
+							$Ttext .= "</span></p> \n";
+						}
+						$Ttext .= "<p ".$Tlist_format['Pform']."> ".$Telement['style'].$Telement['text'];
+					} else {
+						$Ttext .= $Telement['text'];
+					}
+					$tc = 'Y';
+					$tp = '';
+				} 
+			}else if(($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:pPr') AND $dr == 'Y') { // Get list and paragraph formatting for text boxes and images
+					$Tlist_format = $this->getListFormating($paragraph,$Tstyle);
+			} else if(($paragraph->nodeType == XMLREADER::ELEMENT && $paragraph->name === 'w:pPr') AND $ac == 'N') { // Get list and paragraph formatting
 				$list_format = $this->getListFormating($paragraph,$Tstyle);
 				$Pformat = 'Y';
 			} else if($paragraph->name == "w:bookmarkStart") { // check for internal bookmark link and its return
@@ -1788,6 +2378,10 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				$text .= "</span>".$BookRet."</p> \n";
 			}
 		}
+//		if ($TXT == '' AND $Ttext <> ''){
+			$text .= $Ttext;
+//		} 
+		$text .= $list_format['hr'];
 		return $text;
 	}
 			
@@ -2515,16 +3109,11 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 	private function checkTableFormating(&$xml)
 	{
 
-		if ($this->Tcss == 'Y'){
-			$table = "<table style='border-collapse:collapse; width:100%;'><tbody>";
-		}  else {
-			$table = "<table style='border-collapse:collapse;margin-left:auto;margin-right:auto;'><tbody>";
-		}
 		$Tstile = array();
 		$TCcount = 0;
 		$Twidth = 0;
 		$Trow = 1;
-		$Tstyle = '';
+		$Tstyle = $tabhead = $tabpos = $tabc = $Tabwid = $tabtext = $Tabtyp = $tts = '';
 		$Colnum = 1;
 		while ($xml->read()) {
 			if ($xml->nodeType == XMLREADER::ELEMENT && $xml->name === 'w:tbl') { //Get number of rows in the table
@@ -2534,6 +3123,62 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 			}
 			if ($xml->name === 'w:tblStyle') { //Get table style
 				$Tstyle = $xml->getAttribute("w:val");
+			}
+
+			if ($xml->nodeType == XMLREADER::ELEMENT && $xml->name === 'w:tblPr') { //Find start of table header
+				$tabhead = 'Y';
+			}
+			if ($xml->nodeType == XMLREADER::END_ELEMENT && $xml->name === 'w:tblGrid') { //Find end of table header and grid
+				if ($tabpos == 'center'){
+					$tabc = "margin-left:auto; margin-right:auto; ";
+				} else if ($tabpos == 'right'){
+					$tabc = "margin-left:auto; margin-right:0px; ";
+				}
+				if ($this->Tcss == 'Y'){
+					$table = "<div class='tab'><table style='border-collapse:collapse; width:100%;'><tbody>";
+				} else if($Tabtyp == 'pct'){
+					$tt = ceil($Tabwid / 50);
+					$table = "<div class='tab'><table style='border-collapse:collapse; width:".$tt."%; ".$tts.$tabc."'><tbody>";
+				} else if($Tabtyp == 'dxa'){
+					if ($this->Tcss == 'F'){
+						$tt = ceil($Tabwid / $this->MTFactor);
+						$table = "<div class='tab'><table style='border-collapse:collapse; width:".$tt."px; ".$tts.$tabc."'><tbody>";
+					} else {
+						$tt = ceil(100 * $Tabwid / $this->EffPwidth[$this->snt]);
+						if ($tt > 100){
+							$tt = 100;
+						}
+						$table = "<div class='tab'><table style='border-collapse:collapse; width:".$tt."%; ".$tts.$tabc."'><tbody>";
+					}
+				} else {
+					if ($this->Tcss == 'F'){
+						$table = "<div class='tab'><table style='border-collapse:collapse; ".$tts.$tabc."'><tbody>";
+					} else {
+						$tt = ceil(100 * $Twidth / $this->EffPwidth[$this->snt]);
+						if ($tt > 100){
+							$tt = 100;
+						}
+						$table = "<div class='tab'><table style='border-collapse:collapse; width:".$tt."%; ".$tts.$tabc."'><tbody>";
+					}
+				}
+				$tabhead = '';
+			}
+			if ($xml->name === 'w:tblpPr') { //Find out if text at the side of a table
+				if ($xml->getAttribute("w:tblpXSpec") <> ''){
+					 $tabtext = $xml->getAttribute("w:tblpXSpec");
+				}
+				if ($tabtext == 'right'){
+					$tts = "float:right; margin-left:20px; ";
+				} else {
+					$tts = "float:left; margin-right:20px; ";
+				}
+			}
+			if ($xml->name === 'w:tblW') { //Get table width
+				$Tabwid = $xml->getAttribute("w:w");
+				$Tabtyp = $xml->getAttribute("w:type");
+			}
+			if ($xml->name === 'w:jc' AND $tabhead == 'Y') { //Get table width
+				$tabpos = $xml->getAttribute("w:val");
 			}
 
 			if ($xml->nodeType == XMLREADER::ELEMENT && $xml->name === 'w:tblBorders') { //Get table default borders
@@ -2688,31 +3333,45 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 						
 						if ($Tmerge[$Trow][$Tcol] > 0){
 							if ($this->Tcss == 'Y'){
+								if ($ts['cellwtype'] == 'pct'){
+									$cellwc = "width:".floor($ts['cellwidth'] / 50)."%; ";
+								} else if ($ts['cellwtype'] == 'dxa'){
+									$cellwc = "width:".floor($ts['cellwidth'] / $Twidth *95)."%; ";
+								} else {
+									$cellwc = '';
+								}
 								if ($Tmerge[$Trow][$Tcol] == 1){
 									if (isset($ts['colspan'])){
-										$table .= "<td colspan='".$ts['colspan']."'; style='width:".floor($ts['cellwidth'] / $Twidth *95)."%; ".$style;
+										$table .= "<td colspan='".$ts['colspan']."'; style='".$cellwc.$style;
 									} else {
-										$table .= "<td style='width:".floor($ts['cellwidth'] / $Twidth *95)."%; ".$style;
+										$table .= "<td style='".$cellwc.$style;
 									}
 								} else {
 									if (isset($ts['colspan'])){
-										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; colspan='".$ts['colspan']."'; style='width:".floor($ts['cellwidth'] / $Twidth *95)."%; ".$style;
+										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; colspan='".$ts['colspan']."'; style='".$cellwc.$style;
 									} else {
-										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; style='width:".floor($ts['cellwidth'] / $Twidth *95)."%; ".$style;
+										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; style='".$cellwc.$style;
 									}
 								}
 							} else {
+								if ($ts['cellwtype'] == 'pct'){
+									$cellwc = "width:".floor($ts['cellwidth'] / 50)."%; ";
+								} else if ($ts['cellwtype'] == 'dxa'){
+									$cellwc = "width:".floor($ts['cellwidth'] / $this->MTFactor)."px; ";
+								} else {
+									$cellwc = '';
+								}
 								if ($Tmerge[$Trow][$Tcol] == 1){
 									if (isset($ts['colspan'])){
-										$table .= "<td colspan='".$ts['colspan']."'; style='width:".$ts['cellwidth']/$this->MTFactor."px; ".$style;
+										$table .= "<td colspan='".$ts['colspan']."'; style='".$cellwc.$style;
 									} else {
-										$table .= "<td style='width:".$ts['cellwidth']/$this->MTFactor."px; ".$style;
+										$table .= "<td style='".$cellwc.$style;
 									}
 								} else {
 									if (isset($ts['colspan'])){
-										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; colspan='".$ts['colspan']."'; style='width:".$ts['cellwidth']/$this->MTFactor."px; ".$style;
+										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; colspan='".$ts['colspan']."'; style='".$cellwc.$style;
 									} else {
-										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; style='width:".$ts['cellwidth']/$this->MTFactor."px; ".$style;
+										$table .= "<td rowspan='".$Tmerge[$Trow][$Tcol]."'; style='".$cellwc.$style;
 									}
 								}
 							}
@@ -2730,7 +3389,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 			}
 		}
 
-		$table .= "</tbody></table>";
+		$table .= "</tbody></table></div>";
 		return $table;
 	}
 
@@ -2778,6 +3437,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 			}
 			if ($tc->name === "w:tcW") {
 				$style['cellwidth'] = $tc->getAttribute("w:w");
+				$style['cellwtype'] = $tc->getAttribute("w:type");
 			}
 
 		}
@@ -2822,11 +3482,18 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		$count = 0;
 		$valign = $halign = $ct['cell'] = $colours = $BackCol = $TextCol = '';
 		$Cpos = $Cwidth = 0;
+		$ac = 'N';
 		while ($tc->read()) {
 			$ztpp = '';
 			$ztp = '';
 			$text = '';
-			if ($tc->nodeType == XMLREADER::ELEMENT && $tc->name === "w:p") {  // get cell text and its formatting
+			if ($tc->nodeType == XMLREADER::ELEMENT && $tc->name === 'mc:AlternateContent') {
+				$ac = 'Y';
+			}
+			if ($tc->nodeType == XMLREADER::END_ELEMENT && $tc->name === 'mc:AlternateContent') {
+				$ac = 'N';
+			}
+			if ($tc->nodeType == XMLREADER::ELEMENT && $tc->name === "w:p" AND $ac == 'N') {  // get cell text and its formatting
 				$paragraph = new XMLReader;
 				$p = $tc->readOuterXML();
 				$paragraph->xml($p);
@@ -2946,6 +3613,11 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		} else {
 			$this->Hcss = 'N';
 		}
+		if ($OptLen > 3){
+			$Hfoot = substr($imgcss,3,1); //Includes the header and footer (D = Default, F = First page, E = Even, N = None)
+		} else {
+			$Hfoot = 'D';
+		}
 		$this->readZipPart(); // Makes the document and relationships file available throughout the class
 		$this->findstyles(); // Makes the style parameters from the styles XML file available throughout the class
 		$anchor = array();
@@ -2953,8 +3625,9 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 		
 		$reader = new XMLReader();
 		$reader->XML($this->doc_xml->saveXML());
-		$text = "<div style='position:fixed; bottom:50vh; right:10px; border:2px solid black; padding:2px; min-width:3%; text-align:center; background-color:#eeeeee';><a href='#top'>Top</a></div>";
+		$text = "<div style='position:fixed; bottom:50vh; right:10px; border:2px solid black; padding:2px; min-width:3%; text-align:center; background-color:#eeeeee';><a href='#top'>Top</a></div>"; // Provide a link to go to the top of the page
 		$text .= "<div style='margin:10px;'>"; // Provide a small margin around the html output
+		$text .= $this->headers($Hfoot); // Gets the headers
 		while ($reader->read()) {
 		// look for new paragraphs or table
 			$paragraph = new XMLReader;
@@ -2965,7 +3638,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 				$reader->next();
 			}
 			else if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name === 'w:p') {
-				// finds and gets paragraphs			
+				// finds and gets paragraphs	
 				$paragraph->xml($p); // set up new instance of XMLReader for parsing paragraph independantly	
 				$text .= $this->getParagraph($paragraph,'');
 				$reader->next();
@@ -2993,6 +3666,7 @@ class WordPHP // Version v2.1.11 - Timothy Edwards - 8 Sept 2023
 			}
 		}
 		$text .= "<br>&nbsp;";
+		$text .= $this->footers($Hfoot); // Gets the footers
 		
 		$text .= "</div>";
 		$reader->close();
