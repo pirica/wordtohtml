@@ -10,6 +10,8 @@ NOTE - Needs at least php 5 and will run on up to (at least) php 8.1.
 
 NOTE:- It will not read the older 'DOC' Word format. In this case it will give an error message saying that it is a 'non zip file'.
 
+I have a website featuring all my php scripts where you can also contact me - https://phpscripts.meccanoindex.co.uk
+
 FEATURES
 
  1. It will use the correct font and font size (assuming that a common font is being used).
