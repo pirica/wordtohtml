@@ -36,26 +36,28 @@ FEATURES
 
  11. As many Word documents are quite long a link is provided to jump back to the top of the document. Located at the middle of the right side of the screen.
 
- 12. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired. There is also an option to omit images from the resultant HTML if this is desired.
+ 12. Will recognise and display most images contained in the original DOCX word document. Including transparancy in PNG files.
 
- 13. Will now recognise when images are cropped and display the correct cropped image. Will also recognise when images have been rotated (0-360deg) or flipped in Word and display the image correctly.
+ 13. In the default mode, images are formatted and sized very similarly to the original DOCX word document, which is fine for desktop computers. However an option is provided to allow for external CSS formatting to be used instead (e.g. to allow for better display in mobile devices etc.). In this mode each image is given a unique CSS class name - 'Wimg1' for the first image. 'Wimg2' for the second image, etc. to enable formatting of each image as desired. There is also an option to omit images from the resultant HTML if this is desired.
 
- 14. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
+ 14. Will now recognise when images are cropped and display the correct cropped image. Will also recognise when images have been rotated (0-360deg) or flipped in Word and display the image correctly.
 
- 15. The browser is now prevented from using cached images. Avoids caching using old images instead of the new ones when updating the images in a Word document.
+ 15. By default images are saved into the 'images' directory, which is automatically created if it does not exist. An option is provided to enable the name of this directory to be changed if desired.
 
- 16. Text boxes are recognised along with any rotation they may have. Note 180deg rotation is the only practical method of having upside-down text in Word. I have tried to replicate approximately, whether they are near the left, centre or right of the page. Note that due to a combination of how Word puts them in the DOCX file and the vagaries of trying to accurately position things in html, the position of these text boxes is only approximate, unless they are constrained in a table cell.
+ 16. The browser is now prevented from using cached images. Avoids caching using old images instead of the new ones when updating the images in a Word document.
 
- 17. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in the Unicode character set so these are used instead. Available when using php 7.2 and above. Please note that not all browsers can display the full Unicode character set.
+ 17. Text boxes are recognised along with any rotation they may have. Note 180deg rotation is the only practical method of having upside-down text in Word. I have tried to replicate approximately, whether they are near the left, centre or right of the page. Note that due to a combination of how Word puts them in the DOCX file and the vagaries of trying to accurately position things in html, the position of these text boxes is only approximate, unless they are constrained in a table cell.
 
- 18. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax (so internet acces is required for this). Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also the Double Square Bracket is not supported, so any occurences of this are replaced by the Double Pipe.
+ 18. It will now recognise symbols from most of the symbol character sets used in Word (Wingdings, Wingdings 2, Wingdings 3, Webdings, Symbol, Zapf Dingbats). These in the main are not commonly available on the web. However most of the characters or equivalents are available in the Unicode character set so these are used instead. Available when using php 7.2 and above. Please note that not all browsers can display the full Unicode character set.
 
- 19. It will now also display headers and footers. The default is to show them - when there is more than one set of headers and footers in the document it shows:-
+ 19. Will now recognise nearly all Word Mathematical Equations, both standalone and inline with text. It does this using the online version of Mathjax (so internet acces is required for this). Note that Mathjax does not support the Surface Integral and Volume Integral symbols, so multiple Line Integral Symbols are used instead. Also the Double Square Bracket is not supported, so any occurences of this are replaced by the Double Pipe.
+
+ 20. It will now also display headers and footers including any images in them. The default is to show them - when there is more than one set of headers and footers in the document it shows:-
 	a) Second page onwards when the first page is different.
 	b) Odd numbered pages when the document has different ones for odd and even pages.
 	You can select whether to show the default headers/footers, or one of the others if there is more than one. You can also opt not to display them.
 
- 20. The resultant html code is designed to be used either as is, or (after saving) included in another html file. However an option is provided to add a html header, so that after saving it can be used as a standalone file (along with any images that it contains).
+ 21. The resultant html code is designed to be used either as is, or (after saving) included in another html file. However an option is provided to add a html header, so that after saving it can be used as a standalone file (along with any images that it contains).
 
 If anyone finds any problems or has sugestions for enhancements, please contact me on timothy.edwards1@btinternet.com 
 
@@ -174,7 +176,7 @@ $text = $rt->readDocument('FILENAME','NNNN');
 
 ## UPDATE NOTES
 
-Version 2.1.14 - It will now display horizontal lines correctly. A DIV has been placed around tables. Hyperlinks now follow what is set in Word. Prevented the browser caching of images which can cause problems if the images are uptated in a document. It will recognise images that have been rotated or flipped in Word and display them. It will now recognise Text Boxes and any rotation they may have. Headers and Footers are also now included. PNG images can now have transparent backgrounds. It will now correctly replicate the relative width of a table no matter how it is done - '%' or 'cm'. Whether by whole table and/or individual columns. e.g. if a table takes up 50% of the available page width, it will take up 50% of the screen width. It will also now recognise whether the table is left, centre or right justified and display accordingly. It will also allow for having text alongside a table - left or right side. Unfortunately at the moment I can't replicate have a centre table with text either side, so in this case it just reverts to putting the table on the left and the text on the right.
+Version 2.1.14 - It will now display horizontal lines correctly. A DIV has been placed around tables. Hyperlinks now follow what is set in Word. Prevented the browser caching of images which can cause problems if the images are uptated in a document. It will recognise images that have been rotated or flipped in Word and display them. It will now recognise Text Boxes and any rotation they may have. Headers and Footers are also now included including any images in them. PNG images can now have transparent backgrounds. It will now correctly replicate the relative width of a table no matter how it is done - '%' or 'cm'. Whether by whole table and/or individual columns. e.g. if a table takes up 50% of the available page width, it will take up 50% of the screen width. It will also now recognise whether the table is left, centre or right justified and display accordingly. It will also allow for having text alongside a table - left or right side. Unfortunately at the moment I can't replicate have a centre table with text either side, so in this case it just reverts to putting the table on the left and the text on the right.
 
 Version 2.1.13 - It will now recognise many of the various underlining styles in Word. It will duplicate the following styles:- Single, Double, Dotted, Dashed and Wavy together with their heavy/thick versions and coloured underlining. It will also now recognise 'double strikethrough. In addition a few bugs have been cleared.
 
