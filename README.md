@@ -10,7 +10,7 @@ NOTE - Needs at least php 5 and will run on up to (at least) php 8.1.
 
 NOTE:- It will not read the older 'DOC' Word format. In this case it will give an error message saying that it is a 'non zip file'.
 
-I have a website featuring all my php scripts where you can also contact me - https://phpscripts.meccanoindex.co.uk
+I have a website featuring all my php scripts where you can also test this script with one of your own Word documents - https://phpscripts.meccanoindex.co.uk. You can also contact me through my website.
 
 FEATURES
 
