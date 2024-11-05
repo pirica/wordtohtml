@@ -9,11 +9,17 @@ MathJax = {
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
 </script>
 <?php
-class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
+class WordPHP // Version v2.1.14 - Timothy Edwards - 2 Nov 2024
 {
 	private $debug = false;
 	private $file;
 	private $rels_xml;
+	private $head1_rels_xml;
+	private $head2_rels_xml;
+	private $head3_rels_xml;
+	private $foot1_rels_xml;
+	private $foot2_rels_xml;
+	private $foot3_rels_xml;
 	private $doc_xml;
 	private $Icss;
 	private $Tcss;
@@ -28,6 +34,7 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 	private $EffPwidth; //Effective page width (after removing margins) - used for table width calcs.
 	private $snt = 0;  //Section counter - used for using correct width in defining position of text boxes
 	private $snti = 'N';   // find page size definition - used for using correct width in defining position of text boxes
+	private $HF = '';
 	
 	/**
 	 * CONSTRUCTOR
@@ -220,6 +227,25 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 		}
 
 		$zip = new ZipArchive();
+		$_xml_rels_head1 = 'word/_rels/header1.xml.rels';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word header1 relationships file
+			if (($index = $zip->locateName($_xml_rels_head1)) !== false) {
+				$xml_rels_head1 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_rels_head1)){ // if the _rels/header1.xml.rels file exists parse it
+			$enc = mb_detect_encoding($_xml_rels_head1);
+			$this->setXmlParts($this->head1_rels_xml, $xml_rels_head1, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/_rels/header1.xml.rels<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $this->head1_rels_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+		$zip = new ZipArchive();
 		$_xml_head2 = 'word/header2.xml';
 		if (true === $zip->open($this->file)) {
 			//Get the headers from the word header2 file
@@ -235,6 +261,26 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 				echo "<br>XML File : word/header2.xml<br>";
 				echo "<textarea style='width:100%; height: 200px;'>";
 				echo $head2_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+
+		$zip = new ZipArchive();
+		$_xml_rels_head2 = 'word/_rels/header2.xml.rels';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word header2 relationships file
+			if (($index = $zip->locateName($_xml_rels_head2)) !== false) {
+				$xml_rels_head2 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_rels_head2)){ // if the _rels/header2.xml.rels file exists parse it
+			$enc = mb_detect_encoding($_xml_rels_head2);
+			$this->setXmlParts($this->head2_rels_xml, $xml_rels_head2, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/_rels/header2.xml.rels<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $this->head2_rels_xml->saveXML();
 				echo "</textarea>";
 			}
 		}
@@ -259,6 +305,26 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 			}
 		}
 		
+		$zip = new ZipArchive();
+		$_xml_rels_head3 = 'word/_rels/header3.xml.rels';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word header3 relationships file
+			if (($index = $zip->locateName($_xml_rels_head3)) !== false) {
+				$xml_rels_head3 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_rels_head3)){ // if the _rels/header3.xml.rels file exists parse it
+			$enc = mb_detect_encoding($_xml_rels_head3);
+			$this->setXmlParts($this->head3_rels_xml, $xml_rels_head3, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/_rels/header3.xml.rels<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $this->head3_rels_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+
 		$reader1 = new XMLReader();
 		$Pelement = array();
 		$Ttext = array();
@@ -270,16 +336,21 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 			if ($Hfoot == 'F'){
 				if (isset($xml_head3)){ 
 					$reader1->XML($head3_xml->saveXML());
+					$this->HF = 'H3';
 				} else {
 					$reader1->XML($head1_xml->saveXML());
+					$this->HF = 'H1';
 				}
 			} else if ($Hfoot == 'E'){
 				$reader1->XML($head1_xml->saveXML());				
+					$this->HF = 'H1';
 			} else {
 				if (isset($xml_head2)){
 					$reader1->XML($head2_xml->saveXML());
+					$this->HF = 'H2';
 				} else {
 					$reader1->XML($head1_xml->saveXML());
+					$this->HF = 'H1';
 				}
 			}
 			while ($reader1->read()) {
@@ -321,6 +392,7 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 					}
 				}
 			}
+			$this->HF = '';
 			return $Htext;
 		}
 	}
@@ -357,6 +429,26 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 		}
 
 		$zip = new ZipArchive();
+		$_xml_rels_foot1 = 'word/_rels/footer1.xml.rels';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word footer1 relationships file
+			if (($index = $zip->locateName($_xml_rels_foot1)) !== false) {
+				$xml_rels_foot1 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_rels_foot1)){ // if the _rels/footer1.xml.rels file exists parse it
+			$enc = mb_detect_encoding($_xml_rels_foot1);
+			$this->setXmlParts($this->foot1_rels_xml, $xml_rels_foot1, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/_rels/footer1.xml.rels<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $this->foot1_rels_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+		
+		$zip = new ZipArchive();
 		$_xml_foot2 = 'word/footer2.xml';
 		if (true === $zip->open($this->file)) {
 			//Get the footers from the word footer2 file
@@ -378,6 +470,26 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 		}
 
 		$zip = new ZipArchive();
+		$_xml_rels_foot2 = 'word/_rels/footer2.xml.rels';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word footer2 relationships file
+			if (($index = $zip->locateName($_xml_rels_foot2)) !== false) {
+				$xml_rels_foot2 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_rels_foot2)){ // if the _rels/footer2.xml.rels file exists parse it
+			$enc = mb_detect_encoding($_xml_rels_foot2);
+			$this->setXmlParts($this->foot2_rels_xml, $xml_rels_foot2, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/_rels/footer2.xml.rels<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $this->foot2_rels_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+		
+		$zip = new ZipArchive();
 		$_xml_foot3 = 'word/footer3.xml';
 		if (true === $zip->open($this->file)) {
 			//Get the footers from the word footer3 file
@@ -398,6 +510,26 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 			}
 		}
 		
+		$zip = new ZipArchive();
+		$_xml_rels_foot3 = 'word/_rels/footer3.xml.rels';
+		if (true === $zip->open($this->file)) {
+			//Get the headers from the word footer3 relationships file
+			if (($index = $zip->locateName($_xml_rels_foot3)) !== false) {
+				$xml_rels_foot3 = $zip->getFromIndex($index);
+			}
+			$zip->close();
+		}
+		if (isset($xml_rels_foot3)){ // if the _rels/footer3.xml.rels file exists parse it
+			$enc = mb_detect_encoding($_xml_rels_foot3);
+			$this->setXmlParts($this->foot3_rels_xml, $xml_rels_foot3, $enc);
+			if($this->debug) {
+				echo "<br>XML File : word/_rels/footer3.xml.rels<br>";
+				echo "<textarea style='width:100%; height: 200px;'>";
+				echo $this->foot3_rels_xml->saveXML();
+				echo "</textarea>";
+			}
+		}
+		
 		$reader1 = new XMLReader();
 		$Pelement = array();
 		$Ttext = array();
@@ -409,16 +541,21 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 			if ($Hfoot == 'F'){
 				if (isset($xml_foot3)){ 
 					$reader1->XML($foot3_xml->saveXML());
+					$this->HF = 'F3';
 				} else {
 					$reader1->XML($foot1_xml->saveXML());
+					$this->HF = 'F1';
 				}
 			} else if ($Hfoot == 'E'){
 				$reader1->XML($foot1_xml->saveXML());
+					$this->HF = 'F1';
 			} else {
 				if (isset($xml_foot2)){
 					$reader1->XML($foot2_xml->saveXML());
+					$this->HF = 'F2';
 				} else {
 					$reader1->XML($foot1_xml->saveXML());
+					$this->HF = 'F1';
 				}
 			}
 			while ($reader1->read()) {
@@ -460,6 +597,7 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 					}
 				}
 			}
+			$this->HF = '';
 			return $Ftext;
 		}
 	}
@@ -1118,7 +1256,21 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 						// image id found, get the image location
 						if (!$notfound && $relId) {
 							$reader = new XMLReader();
-							$reader->XML($this->rels_xml->saveXML());
+							if ($this->HF == ''){
+								$reader->XML($this->rels_xml->saveXML());
+							} else if ($this->HF == 'H1'){
+								$reader->XML($this->head1_rels_xml->saveXML());
+							} else if ($this->HF == 'H2'){
+								$reader->XML($this->head2_rels_xml->saveXML());
+							} else if ($this->HF == 'H3'){
+								$reader->XML($this->head3_rels_xml->saveXML());
+							} else if ($this->HF == 'F1'){
+								$reader->XML($this->foot1_rels_xml->saveXML());
+							} else if ($this->HF == 'F2'){
+								$reader->XML($this->foot2_rels_xml->saveXML());
+							} else if ($this->HF == 'F3'){
+								$reader->XML($this->foot3_rels_xml->saveXML());
+							}
 							while ($reader->read()) {
 								if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name=='Relationship') {
 									if($reader->getAttribute("Id") == $relId) {
@@ -1839,8 +1991,21 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 			// image id found, get the image location
 			if (!$notfound && $relId) {
 				$reader = new XMLReader();
-				$reader->XML($this->rels_xml->saveXML());
-				
+				if ($this->HF == ''){
+					$reader->XML($this->rels_xml->saveXML());
+				} else if ($this->HF == 'H1'){
+					$reader->XML($this->head1_rels_xml->saveXML());
+				} else if ($this->HF == 'H2'){
+					$reader->XML($this->head2_rels_xml->saveXML());
+				} else if ($this->HF == 'H3'){
+					$reader->XML($this->head3_rels_xml->saveXML());
+				} else if ($this->HF == 'F1'){
+					$reader->XML($this->foot1_rels_xml->saveXML());
+				} else if ($this->HF == 'F2'){
+					$reader->XML($this->foot2_rels_xml->saveXML());
+				} else if ($this->HF == 'F3'){
+					$reader->XML($this->foot3_rels_xml->saveXML());
+				}
 				while ($reader->read()) {
 					if ($reader->nodeType == XMLREADER::ELEMENT && $reader->name=='Relationship') {
 						if($reader->getAttribute("Id") == $relId) {
@@ -1882,14 +2047,12 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 		if (!is_dir($this->tmpDir)){
 			mkdir($this->tmpDir, 0755, true);
 		}
-
 		if ($ext == 'emf' OR $ext == 'wmf'){
-			$ftname = $this->tmpDir.'/'.$relId.'.'.$ext;
+			$ftname = $this->tmpDir.'/'.$relId.$this->HF.'.'.$ext;
 			$tfile = fopen($ftname, "w");
 			fwrite($tfile, $image);
 			fclose($tfile);
-			
-			$fname = $this->tmpDir.'/'.$relId.'.jpg';
+			$fname = $this->tmpDir.'/'.$relId.$this->HF.'.jpg';
 			if ($ext == 'wmf'){ // Note that Imagick will only convert '.wmf' files (NOT '.emf' files)
 				$imagick = new Imagick();
 				$imagick->setresolution(300, 300);
@@ -1910,10 +2073,10 @@ class WordPHP // Version v2.1.14 - Timothy Edwards - 17 Oct 2024
 				$Cw = round($crop['width'] * $Iwidth, 0);
 				$Ch = round($crop['height'] * $Iheight, 0);
 				$im = imagecrop($im, ['x' => $Cx, 'y' => $Cy, 'width' => $Cw, 'height' => $Ch]);
-				$fname = $this->tmpDir.'/'.$relId.$Ccount.'.'.$ext;
+				$fname = $this->tmpDir.'/'.$relId.$this->HF.$Ccount.'.'.$ext;
 				$Ccount++;
 			} else {		
-				$fname = $this->tmpDir.'/'.$relId.'.'.$ext;
+				$fname = $this->tmpDir.'/'.$relId.$this->HF.'.'.$ext;
 			}
 
 			switch ($ext) {
